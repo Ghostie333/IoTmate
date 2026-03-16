@@ -1,0 +1,6 @@
+@IoTmate_HostAddress = http://localhost:5085
+
+GET {{IoTmate_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
