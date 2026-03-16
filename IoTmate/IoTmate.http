@@ -1,6 +1,39 @@
-@IoTmate_HostAddress = http://localhost:5085
+@IoTmate_HostAddress = http://localhost:7070
 
-GET {{IoTmate_HostAddress}}/weatherforecast/
+GET {{IoTmate_HostAddress}}/IoTmateMainPage/
 Accept: application/json
 
 ###
+
+GET {{IoTmate_HostAddress}}/api/devices
+Accept: application/json
+
+###
+
+GET {{IoTmate_HostAddress}}/api/auth/me
+Accept: application/json
+
+###
+
+GET {{IoTmate_HostAddress}}/api/auth/protected
+Accept: application/json
+
+###
+
+GET {{IoTmate_HostAddress}}/api/telemetry/esp32-1?take=10
+Accept: application/json
+
+###
+
+POST {{IoTmate_HostAddress}}/api/devices/esp32-1/cmd/relay
+Content-Type: application/json
+
+{
+  "payloadJson": "{\"channel\":1,\"state\":true}"
+}
+
+###
+
+# MQTT test (uruchom w shellu, nie w tym pliku):
+# mosquitto_pub -h localhost -p 1883 -t devices/esp32-1/telemetry/temp -m "{\"value\":23.5}"
+# mosquitto_pub -h localhost -p 1883 -t devices/esp32-1/telemetry/humidity -m "61.2"

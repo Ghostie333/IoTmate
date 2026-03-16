@@ -1,0 +1,56 @@
+@page "/devices"
+@rendermode @(new InteractiveServerRenderMode())
+
+<h1>Devices</h1>
+
+<AuthorizeView>
+    <Authorized>
+        @if (_devices is null)
+        {
+            <MudProgressCircular Indeterminate="true" />
+        }
+        else
+        {
+            <MudTable Items="_devices" Dense="true" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Id</MudTh>
+                    <MudTh>Nazwa</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Last seen (UTC)</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="d">
+                    <MudTd DataLabel="Id">@d.Id</MudTd>
+                    <MudTd DataLabel="Nazwa">@d.Name</MudTd>
+                    <MudTd DataLabel="Status">
+                        <MudBadge Color="@(d.Online ? Color.Success : Color.Default)" Content="@(d.Online ? "Online" : "Offline")" />
+                    </MudTd>
+                    <MudTd DataLabel="Last seen (UTC)">@(d.LastSeenUtc?.ToString("u") ?? "-")</MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">
+            Musisz się zalogować, żeby zobaczyć swoje urządzenia. <MudLink Href="/login">Przejdź do logowania</MudLink>
+        </MudAlert>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private IReadOnlyList<IoTmate.Contracts.Devices.DeviceDto>? _devices;
+
+    [Inject]
+    private HttpClient Http { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _devices = await Http.GetFromJsonAsync<IReadOnlyList<IoTmate.Contracts.Devices.DeviceDto>>("api/devices");
+        }
+        catch
+        {
+            _devices = Array.Empty<IoTmate.Contracts.Devices.DeviceDto>();
+        }
+    }
+}

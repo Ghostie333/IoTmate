@@ -1,0 +1,1 @@
+docker compose --env-file iotmate.env up -d --build
