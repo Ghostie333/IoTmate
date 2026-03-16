@@ -3,7 +3,7 @@
 
 @using System.ComponentModel.DataAnnotations
 
-<h1>Logowanie</h1>
+<h1>Sign in</h1>
 
 @if (!string.IsNullOrWhiteSpace(_error))
 {
@@ -16,16 +16,16 @@
             <MudCardContent>
                 <form method="post" action="/login">
                     <MudTextField Name="Email" Label="Email" @bind-Value="_model.Email" For="() => _model.Email" Required="true" />
-                    <MudTextField Name="Password" Label="Hasło" InputType="InputType.Password" @bind-Value="_model.Password" For="() => _model.Password" Required="true" Class="mt-3" />
-                    <MudCheckBox Name="RememberMe" T="bool" @bind-Value="_model.RememberMe" Label="Zapamiętaj mnie" Class="mt-3" />
+                    <MudTextField Name="Password" Label="Password" InputType="InputType.Password" @bind-Value="_model.Password" For="() => _model.Password" Required="true" Class="mt-3" />
+                    <MudCheckBox Name="RememberMe" T="bool" @bind-Value="_model.RememberMe" Label="Remember me" Class="mt-3" />
 
                     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" FullWidth="true">
-                        Zaloguj
+                        Sign in
                     </MudButton>
                 </form>
 
                 <MudText Class="mt-3">
-                    Nie masz konta? <MudLink Href="/register">Zarejestruj się</MudLink>
+                    Don't have an account? <MudLink Href="/register">Create one</MudLink>
                 </MudText>
             </MudCardContent>
         </MudCard>
@@ -35,30 +35,6 @@
 @code {
     private readonly LoginModel _model = new();
     private string? _error;
-
-    [Inject] private HttpClient Http { get; set; } = default!;
-    [Inject] private NavigationManager Nav { get; set; } = default!;
-
-    private async Task OnSubmitAsync()
-    {
-        _error = null;
-
-        var response = await Http.PostAsJsonAsync("login", new
-        {
-            email = _model.Email,
-            password = _model.Password,
-            rememberMe = _model.RememberMe
-        });
-
-        if (response.IsSuccessStatusCode)
-        {
-            Nav.NavigateTo("/devices", forceLoad: true); // Wymuszenie pełnego przeładowania strony
-            return;
-        }
-
-        var body = await response.Content.ReadAsStringAsync();
-        _error = string.IsNullOrWhiteSpace(body) ? $"Błąd logowania ({(int)response.StatusCode})" : body;
-    }
 
     private sealed class LoginModel
     {

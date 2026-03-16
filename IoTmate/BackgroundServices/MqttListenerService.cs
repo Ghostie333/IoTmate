@@ -50,12 +50,6 @@ public sealed class MqttListenerService : BackgroundService
                 }
 
                 _telemetry.Publish(point);
-
-                const string SystemOwnerUserId = "system";
-
-                var existing = _devices.GetById(SystemOwnerUserId, point.DeviceId);
-                var name = existing?.Name ?? point.DeviceId;
-                _devices.Upsert(SystemOwnerUserId, new IoTmate.Contracts.Devices.DeviceDto(point.DeviceId, name, Online: true, LastSeenUtc: point.TimestampUtc));
             }
             catch (Exception ex)
             {

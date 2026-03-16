@@ -15,19 +15,36 @@ public sealed class DevicesController : ControllerBase
     private readonly IDeviceStore _devices;
     private readonly IMqttPublisher _mqtt;
     private readonly IConfiguration _configuration;
+    private readonly ITelemetryBus _telemetry;
     private readonly ICurrentUser _currentUser;
 
-    public DevicesController(IDeviceStore devices, IMqttPublisher mqtt, IConfiguration configuration, ICurrentUser currentUser)
+    public DevicesController(IDeviceStore devices, IMqttPublisher mqtt, IConfiguration configuration, ITelemetryBus telemetry, ICurrentUser currentUser)
     {
         _devices = devices;
         _mqtt = mqtt;
         _configuration = configuration;
+        _telemetry = telemetry;
         _currentUser = currentUser;
     }
 
     [HttpGet]
     public ActionResult<IReadOnlyList<DeviceDto>> GetAll()
-        => Ok(_devices.GetAll(RequireUserId()));
+    {
+        var userId = RequireUserId();
+        var list = _devices.GetAll(userId);
+
+        var enriched = list
+            .Select(d =>
+            {
+                var last = _telemetry.GetLatest(d.Id, 1).FirstOrDefault();
+                return last is null
+                    ? d
+                    : d with { Online = true, LastSeenUtc = last.TimestampUtc };
+            })
+            .ToArray();
+
+        return Ok(enriched);
+    }
 
     [HttpGet("{id}")]
     public ActionResult<DeviceDto> GetById(string id)

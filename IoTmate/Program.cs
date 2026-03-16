@@ -32,28 +32,7 @@ builder.Services.AddDataProtection()
     .SetApplicationName("IoTmate");
 
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped(sp =>
-{
-    var httpContext = sp.GetRequiredService<IHttpContextAccessor>().HttpContext;
-
-    // W Blazor Server HttpClient działa na serwerze, ale żeby przeglądarka dostała cookie
-    // dla poprawnego origin, requesty muszą iść pod ten sam host co UI (Host header).
-    // W Dockerze aplikacja słucha na 8080, ale Host z przeglądarki to np. localhost:7070.
-    var host = httpContext?.Request.Headers.Host.ToString();
-    var scheme = httpContext?.Request.Headers["X-Forwarded-Proto"].ToString();
-    if (string.IsNullOrWhiteSpace(scheme))
-    {
-        scheme = httpContext?.Request.Scheme;
-    }
-
-    if (!string.IsNullOrWhiteSpace(host) && !string.IsNullOrWhiteSpace(scheme))
-    {
-        return new HttpClient { BaseAddress = new Uri($"{scheme}://{host}/") };
-    }
-
-    // fallback
-    return new HttpClient { BaseAddress = new Uri("http://localhost:7070/") };
-});
+builder.Services.AddHttpClient();
 
 builder.Services.AddDbContext<IoTmate.Authentication.AuthDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Auth") ?? "Data Source=auth.db"));
@@ -82,6 +61,7 @@ builder.Services.AddSingleton<IoTmate.Services.ITelemetryBus, IoTmate.Services.I
 builder.Services.Configure<IoTmate.Infrastructure.Mqtt.MqttOptions>(builder.Configuration.GetSection("Mqtt"));
 builder.Services.AddSingleton<IoTmate.Infrastructure.Mqtt.IMqttPublisher, IoTmate.Infrastructure.Mqtt.MqttPublisher>();
 builder.Services.AddHostedService<IoTmate.BackgroundServices.MqttListenerService>();
+builder.Services.AddHostedService<IoTmate.BackgroundServices.MqttTestPublisherService>();
 
 var app = builder.Build();
 
@@ -90,6 +70,9 @@ using (var scope = app.Services.CreateScope())
     Directory.CreateDirectory("/app/data");
     var db = scope.ServiceProvider.GetRequiredService<IoTmate.Authentication.AuthDbContext>();
     db.Database.EnsureCreated();
+
+    var mongo = scope.ServiceProvider.GetRequiredService<IoTmate.Data.Mongo.IMongoDb>();
+    IoTmate.Data.Devices.DeviceCollectionSetup.EnsureIndexes(mongo);
 }
 
 // Configure the HTTP request pipeline.

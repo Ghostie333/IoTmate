@@ -20,6 +20,17 @@ Accept: application/json
 
 ###
 
+# After login in browser, add a test device:
+POST {{IoTmate_HostAddress}}/api/device-provisioning/add
+Content-Type: application/json
+
+{
+  "deviceId": "test-device",
+  "name": "MQTT test device"
+}
+
+###
+
 GET {{IoTmate_HostAddress}}/api/telemetry/esp32-1?take=10
 Accept: application/json
 

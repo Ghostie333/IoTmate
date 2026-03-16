@@ -1,0 +1,64 @@
+@page "/devices/{DeviceId}/telemetry"
+@rendermode @(new InteractiveServerRenderMode())
+
+<h1>Telemetry: @DeviceId</h1>
+
+<MudStack Row="true" Spacing="2" Class="mb-4">
+    <MudButton Variant="Variant.Outlined" OnClick="ReloadAsync">Refresh</MudButton>
+</MudStack>
+
+@if (_points is null)
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+else if (_points.Count == 0)
+{
+    <MudAlert Severity="Severity.Info">No telemetry yet.</MudAlert>
+}
+else
+{
+    <MudTable Items="_points" Dense="true" Hover="true">
+        <HeaderContent>
+            <MudTh>Time (UTC)</MudTh>
+            <MudTh>Key</MudTh>
+            <MudTh align="right">Value</MudTh>
+        </HeaderContent>
+        <RowTemplate Context="p">
+            <MudTd>@p.TimestampUtc.ToString("u")</MudTd>
+            <MudTd>@p.Key</MudTd>
+            <MudTd Align="Align.Right">@p.Value</MudTd>
+        </RowTemplate>
+    </MudTable>
+}
+
+@code {
+    [Parameter] public string DeviceId { get; set; } = string.Empty;
+
+    private IReadOnlyList<IoTmate.Contracts.Telemetry.TelemetryPointDto>? _points;
+
+    [Inject] private IoTmate.Services.ITelemetryBus Telemetry { get; set; } = default!;
+    [Inject] private IoTmate.Services.IDeviceStore DeviceStore { get; set; } = default!;
+    [Inject] private IoTmate.Authentication.ICurrentUser CurrentUser { get; set; } = default!;
+
+    protected override Task OnInitializedAsync()
+        => ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        try
+        {
+            var userId = CurrentUser.UserId;
+            if (string.IsNullOrWhiteSpace(userId) || DeviceStore.GetById(userId, DeviceId) is null)
+            {
+                _points = Array.Empty<IoTmate.Contracts.Telemetry.TelemetryPointDto>();
+                return;
+            }
+
+            _points = Telemetry.GetLatest(DeviceId, 50);
+        }
+        catch
+        {
+            _points = Array.Empty<IoTmate.Contracts.Telemetry.TelemetryPointDto>();
+        }
+    }
+ }

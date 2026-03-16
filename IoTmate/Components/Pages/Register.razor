@@ -3,7 +3,7 @@
 
 @using System.ComponentModel.DataAnnotations
 
-<h1>Rejestracja</h1>
+<h1>Create account</h1>
 
 @if (!string.IsNullOrWhiteSpace(_error))
 {
@@ -16,16 +16,16 @@
             <MudCardContent>
                 <form method="post" action="/register">
                     <MudTextField Name="Email" Label="Email" @bind-Value="_model.Email" For="() => _model.Email" Required="true" />
-                    <MudTextField Name="Password" Label="Hasło" InputType="InputType.Password" @bind-Value="_model.Password" For="() => _model.Password" Required="true" Class="mt-3" />
-                    <MudTextField Name="ConfirmPassword" Label="Powtórz hasło" InputType="InputType.Password" @bind-Value="_model.ConfirmPassword" For="() => _model.ConfirmPassword" Required="true" Class="mt-3" />
+                    <MudTextField Name="Password" Label="Password" InputType="InputType.Password" @bind-Value="_model.Password" For="() => _model.Password" Required="true" Class="mt-3" />
+                    <MudTextField Name="ConfirmPassword" Label="Confirm password" InputType="InputType.Password" @bind-Value="_model.ConfirmPassword" For="() => _model.ConfirmPassword" Required="true" Class="mt-3" />
 
                     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" FullWidth="true">
-                        Utwórz konto
+                        Create account
                     </MudButton>
                 </form>
 
                 <MudText Class="mt-3">
-                    Masz już konto? <MudLink Href="/login">Zaloguj się</MudLink>
+                    Already have an account? <MudLink Href="/login">Sign in</MudLink>
                 </MudText>
             </MudCardContent>
         </MudCard>

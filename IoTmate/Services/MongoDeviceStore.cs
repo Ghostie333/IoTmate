@@ -17,7 +17,7 @@ public sealed class MongoDeviceStore : IDeviceStore
     {
         return _collection
             .Find(d => d.OwnerUserId == ownerUserId)
-            .SortBy(d => d.Id)
+            .SortBy(d => d.DeviceId)
             .ToList()
             .Select(ToDto)
             .ToArray();
@@ -25,7 +25,7 @@ public sealed class MongoDeviceStore : IDeviceStore
 
     public DeviceDto? GetById(string ownerUserId, string id)
     {
-        var doc = _collection.Find(d => d.OwnerUserId == ownerUserId && d.Id == id).FirstOrDefault();
+        var doc = _collection.Find(d => d.OwnerUserId == ownerUserId && d.DeviceId == id).FirstOrDefault();
         return doc is null ? null : ToDto(doc);
     }
 
@@ -33,7 +33,7 @@ public sealed class MongoDeviceStore : IDeviceStore
     {
         var doc = new IoTmate.Data.Devices.DeviceDocument
         {
-            Id = device.Id,
+            DeviceId = device.Id,
             OwnerUserId = ownerUserId,
             Name = device.Name,
             Online = device.Online,
@@ -41,7 +41,7 @@ public sealed class MongoDeviceStore : IDeviceStore
         };
 
         _collection.ReplaceOne(
-            d => d.OwnerUserId == ownerUserId && d.Id == device.Id,
+            d => d.OwnerUserId == ownerUserId && d.DeviceId == device.Id,
             doc,
             new ReplaceOptions { IsUpsert = true });
 
@@ -49,5 +49,5 @@ public sealed class MongoDeviceStore : IDeviceStore
     }
 
     private static DeviceDto ToDto(IoTmate.Data.Devices.DeviceDocument d)
-        => new(d.Id, d.Name, d.Online, d.LastSeenUtc);
+        => new(d.DeviceId, d.Name, d.Online, d.LastSeenUtc);
 }
