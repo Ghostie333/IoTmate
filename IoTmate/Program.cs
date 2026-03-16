@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddRazorPages();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -26,6 +27,8 @@ if (builder.Environment.IsDevelopment())
 }
 
 builder.Services.AddMudServices();
+
+Directory.CreateDirectory("/app/data/dpkeys");
 
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo("/app/data/dpkeys"))
@@ -72,7 +75,8 @@ using (var scope = app.Services.CreateScope())
     db.Database.EnsureCreated();
 
     var mongo = scope.ServiceProvider.GetRequiredService<IoTmate.Data.Mongo.IMongoDb>();
-    IoTmate.Data.Devices.DeviceCollectionSetup.EnsureIndexes(mongo);
+    var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("MongoIndexSetup");
+    IoTmate.Data.Devices.DeviceCollectionSetup.EnsureIndexes(mongo, logger);
 }
 
 // Configure the HTTP request pipeline.
@@ -96,70 +100,26 @@ app.UseAuthorization();
 
 app.UseAntiforgery();
 
-app.MapPost("/login", async (
-    [Microsoft.AspNetCore.Mvc.FromServices] Microsoft.AspNetCore.Identity.SignInManager<IoTmate.Authentication.AppUser> signInManager,
-    [Microsoft.AspNetCore.Mvc.FromServices] Microsoft.AspNetCore.Identity.UserManager<IoTmate.Authentication.AppUser> userManager,
-    [Microsoft.AspNetCore.Mvc.FromForm] LoginForm request) =>
+app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+
+app.MapGet("/antiforgery/token", (Microsoft.AspNetCore.Antiforgery.IAntiforgery antiforgery, HttpContext http) =>
 {
-    var user = await userManager.FindByEmailAsync(request.Email);
-    if (user is null)
-    {
-        return Results.Redirect("/login");
-    }
-
-    var rememberMe = string.Equals(request.RememberMe, "on", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(request.RememberMe, "true", StringComparison.OrdinalIgnoreCase)
-        || string.Equals(request.RememberMe, "1", StringComparison.OrdinalIgnoreCase);
-
-    var result = await signInManager.PasswordSignInAsync(user, request.Password, rememberMe, lockoutOnFailure: false);
-    return result.Succeeded ? Results.Redirect("/devices") : Results.Redirect("/login");
-}).DisableAntiforgery();
+    var tokens = antiforgery.GetAndStoreTokens(http);
+    return Results.Ok(new { token = tokens.RequestToken });
+});
 
 app.MapPost("/logout", async ([Microsoft.AspNetCore.Mvc.FromServices] Microsoft.AspNetCore.Identity.SignInManager<IoTmate.Authentication.AppUser> signInManager) =>
 {
     await signInManager.SignOutAsync();
     return Results.Redirect("/");
-}).DisableAntiforgery();
-
-app.MapPost("/register", async (
-    [Microsoft.AspNetCore.Mvc.FromServices] Microsoft.AspNetCore.Identity.UserManager<IoTmate.Authentication.AppUser> userManager,
-    [Microsoft.AspNetCore.Mvc.FromForm] RegisterForm request) =>
-{
-    if (request.Password != request.ConfirmPassword)
-    {
-        return Results.Redirect("/register");
-    }
-
-    var user = new IoTmate.Authentication.AppUser
-    {
-        UserName = request.Email,
-        Email = request.Email
-    };
-
-    var result = await userManager.CreateAsync(user, request.Password);
-    return result.Succeeded ? Results.Redirect("/login") : Results.Redirect("/register");
-}).DisableAntiforgery();
+});
 
 app.MapControllers();
+app.MapRazorPages();
 
 app.MapRazorComponents<IoTmate.Components.App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
 
-sealed record LoginRequest(string Email, string Password, bool RememberMe);
-sealed record RegisterRequest(string Email, string Password, string ConfirmPassword);
-
-sealed class LoginForm
-{
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-    public string? RememberMe { get; set; }
-}
-
-sealed class RegisterForm
-{
-    public string Email { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
-    public string ConfirmPassword { get; set; } = string.Empty;
-}
+// Auth forms are implemented using Razor Pages in `Pages/`.

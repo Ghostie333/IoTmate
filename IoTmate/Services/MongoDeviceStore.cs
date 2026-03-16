@@ -31,21 +31,23 @@ public sealed class MongoDeviceStore : IDeviceStore
 
     public DeviceDto Upsert(string ownerUserId, DeviceDto device)
     {
-        var doc = new IoTmate.Data.Devices.DeviceDocument
-        {
-            DeviceId = device.Id,
-            OwnerUserId = ownerUserId,
-            Name = device.Name,
-            Online = device.Online,
-            LastSeenUtc = device.LastSeenUtc
-        };
+        var filter = Builders<IoTmate.Data.Devices.DeviceDocument>.Filter.Where(d => d.OwnerUserId == ownerUserId && d.DeviceId == device.Id);
 
-        _collection.ReplaceOne(
-            d => d.OwnerUserId == ownerUserId && d.DeviceId == device.Id,
-            doc,
-            new ReplaceOptions { IsUpsert = true });
+        var update = Builders<IoTmate.Data.Devices.DeviceDocument>.Update
+            .Set(d => d.Name, device.Name)
+            .Set(d => d.Online, device.Online)
+            .Set(d => d.LastSeenUtc, device.LastSeenUtc)
+            .SetOnInsert(d => d.OwnerUserId, ownerUserId)
+            .SetOnInsert(d => d.DeviceId, device.Id);
+
+        _collection.UpdateOne(filter, update, new UpdateOptions { IsUpsert = true });
 
         return device;
+    }
+
+    public void Delete(string ownerUserId, string deviceId)
+    {
+        _collection.DeleteOne(d => d.OwnerUserId == ownerUserId && d.DeviceId == deviceId);
     }
 
     private static DeviceDto ToDto(IoTmate.Data.Devices.DeviceDocument d)

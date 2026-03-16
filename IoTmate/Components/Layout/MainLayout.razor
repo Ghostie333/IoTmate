@@ -13,6 +13,7 @@
         <AuthorizeView>
             <Authorized>
                 <form method="post" action="/logout" style="display:inline;">
+                    <AntiforgeryTokenField />
                     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Text" Color="Color.Inherit">Logout</MudButton>
                 </form>
             </Authorized>

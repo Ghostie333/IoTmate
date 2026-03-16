@@ -1,0 +1,52 @@
+@page "/register"
+@model IoTmate.Pages.RegisterModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    Layout = null;
+}
+
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Create account - IoTmate</title>
+</head>
+<body>
+    <h1>Create account</h1>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Error))
+    {
+        <p style="color: darkred;">@Model.Error</p>
+    }
+
+    <form method="post">
+        @Html.AntiForgeryToken()
+
+        <div>
+            <label>Email</label>
+            <input asp-for="Input.Email" />
+            <span asp-validation-for="Input.Email"></span>
+        </div>
+
+        <div>
+            <label>Password</label>
+            <input asp-for="Input.Password" type="password" />
+            <span asp-validation-for="Input.Password"></span>
+        </div>
+
+        <div>
+            <label>Confirm password</label>
+            <input asp-for="Input.ConfirmPassword" type="password" />
+            <span asp-validation-for="Input.ConfirmPassword"></span>
+        </div>
+
+        <button type="submit">Create account</button>
+    </form>
+
+    <p>
+        Already have an account? <a href="/login">Sign in</a>
+    </p>
+</body>
+</html>

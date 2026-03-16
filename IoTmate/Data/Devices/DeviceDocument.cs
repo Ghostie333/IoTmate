@@ -5,7 +5,7 @@ namespace IoTmate.Data.Devices;
 public sealed class DeviceDocument
 {
     [BsonId]
-    public MongoDB.Bson.ObjectId MongoId { get; set; }
+    public MongoDB.Bson.ObjectId? MongoId { get; set; }
 
     public string DeviceId { get; set; } = default!;
 

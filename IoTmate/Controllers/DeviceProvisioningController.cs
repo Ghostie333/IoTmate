@@ -13,11 +13,13 @@ public sealed class DeviceProvisioningController : ControllerBase
 {
     private readonly IDeviceStore _devices;
     private readonly ICurrentUser _currentUser;
+    private readonly ILogger<DeviceProvisioningController> _logger;
 
-    public DeviceProvisioningController(IDeviceStore devices, ICurrentUser currentUser)
+    public DeviceProvisioningController(IDeviceStore devices, ICurrentUser currentUser, ILogger<DeviceProvisioningController> logger)
     {
         _devices = devices;
         _currentUser = currentUser;
+        _logger = logger;
     }
 
     public sealed record AddDeviceRequest(string DeviceId, string Name);
@@ -29,7 +31,7 @@ public sealed class DeviceProvisioningController : ControllerBase
     }
 
     [HttpPost("add")]
-    public ActionResult<DeviceDto> Add([FromBody] AddDeviceRequest request)
+    public IActionResult Add([FromBody] AddDeviceRequest request)
     {
         var userId = _currentUser.UserId;
         if (userId is null)
@@ -43,6 +45,7 @@ public sealed class DeviceProvisioningController : ControllerBase
         }
 
         var deviceId = request.DeviceId.Trim();
+        _logger.LogInformation("Provisioning device. UserId={UserId} DeviceId={DeviceId} Name={Name}", userId, deviceId, request.Name);
 
         try
         {
@@ -52,32 +55,33 @@ public sealed class DeviceProvisioningController : ControllerBase
         }
         catch (MongoDB.Driver.MongoWriteException ex) when (ex.WriteError?.Category == MongoDB.Driver.ServerErrorCategory.DuplicateKey)
         {
-            return Conflict("DeviceId is already taken.");
+            _logger.LogWarning(ex, "DuplicateKey while provisioning. UserId={UserId} DeviceId={DeviceId} Code={Code} Message={Message}", userId, deviceId, ex.WriteError?.Code, ex.WriteError?.Message);
+            return Conflict($"DeviceId '{deviceId}' is already taken.");
         }
         catch (MongoDB.Driver.MongoBulkWriteException<IoTmate.Data.Devices.DeviceDocument> ex) when (ex.WriteErrors.Any(e => e.Category == MongoDB.Driver.ServerErrorCategory.DuplicateKey))
         {
-            return Conflict("DeviceId is already taken.");
+            _logger.LogWarning(ex, "DuplicateKey (bulk) while provisioning. UserId={UserId} DeviceId={DeviceId} Errors={Errors}", userId, deviceId, ex.WriteErrors.Select(e => new { e.Code, e.Message }).ToArray());
+            return Conflict($"DeviceId '{deviceId}' is already taken.");
         }
     }
 
     [HttpPost("add-form")]
-    [IgnoreAntiforgeryToken]
     public IActionResult AddForm([FromForm] AddDeviceForm request)
     {
         var result = Add(new AddDeviceRequest(request.DeviceId, request.Name));
-        if (result.Result is ObjectResult { StatusCode: 409 } || result.Result is ConflictObjectResult)
+        if (result is UnauthorizedResult)
+        {
+            return Redirect("/login?returnUrl=/devices/add");
+        }
+
+        if (result is ObjectResult { StatusCode: 409 } || result is ConflictObjectResult)
         {
             return Redirect("/devices/add?error=DeviceId%20is%20already%20taken");
         }
 
-        if (result.Result is BadRequestObjectResult)
+        if (result is BadRequestObjectResult)
         {
             return Redirect("/devices/add?error=Invalid%20device%20data");
-        }
-
-        if (result.Result is UnauthorizedResult)
-        {
-            return Redirect("/login");
         }
 
         return Redirect("/devices");

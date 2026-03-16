@@ -13,6 +13,7 @@
         <MudCard>
             <MudCardContent>
                 <form method="post" action="/api/device-provisioning/add-form">
+                    <AntiforgeryTokenField />
                     <MudTextField Name="DeviceId" Label="DeviceId" @bind-Value="_deviceId" Required="true" Immediate="true" />
                     <MudTextField Name="Name" Label="Name" @bind-Value="_name" Immediate="true" Class="mt-3" />
 
