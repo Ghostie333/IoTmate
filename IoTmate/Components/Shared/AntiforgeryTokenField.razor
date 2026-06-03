@@ -1,9 +1,0 @@
-@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
-@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
-
-@{
-    var http = HttpContextAccessor.HttpContext;
-    var token = http is null ? null : Antiforgery.GetAndStoreTokens(http).RequestToken;
-}
-
-<input type="hidden" name="__RequestVerificationToken" value="@(token ?? string.Empty)" />
