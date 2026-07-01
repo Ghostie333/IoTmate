@@ -1,3 +1,6 @@
 /IoTmate/.vs
 /IoTmate/obj
 /IoTmate/bin
+/IoTmate-backend/.vs
+/IoTmate-backend/IoTmate-backend/obj
+/IoTmate-backend/IoTmate-backend/wwwroot/lib
