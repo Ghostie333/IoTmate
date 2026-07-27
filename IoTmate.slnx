@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="IoTmate.Api/IoTmate.Api.csproj" Id="09027e04-b2e2-46bc-8ec2-36e60d4ea042" />
+  <Project Path="IoTmate.Dto/IoTmate.Dto.csproj" Id="8ff12ce4-036d-43c1-b5e0-953c28692bd7" />
+  <Project Path="IoTmate.Model/IoTmate.Model.csproj" />
+  <Project Path="IoTmate.Repository/IoTmate.Repository.csproj" />
+</Solution>

@@ -10,22 +10,19 @@ services:
       - "mosquitto_data:/mosquitto/data"
       - "mosquitto_log:/mosquitto/log"
 
-  mongo:
-    image: "mongo:latest"
-    container_name: "iotmate-mongo"
+  postgres:
+    image: "postgres:16-alpine"
+    container_name: "iotmate-postgres"
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: "${MONGO_ROOT_USER}"
-      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_ROOT_PASS}"
-      MONGO_INITDB_DATABASE: "${MONGO_DB}"
-      MONGO_DB: "${MONGO_DB}"
-      MONGO_APP_USER: "${MONGO_APP_USER}"
-      MONGO_APP_PASS: "${MONGO_APP_PASS}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${POSTGRES_DB}"
     ports:
-      - "27017:27017"
+      - "5432:5432"
     volumes:
-      - "mongo_data:/data/db"
-      - "./mongo/init:/docker-entrypoint-initdb.d:ro"
+      - "postgres_data:/var/lib/postgresql/data"
+      - "./postgres/init:/docker-entrypoint-initdb.d:ro"
 
   backend:
     build:

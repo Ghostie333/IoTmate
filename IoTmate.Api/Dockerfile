@@ -12,19 +12,19 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["IoTmate-backend/IoTmate-backend.csproj", "IoTmate-backend/"]
-RUN dotnet restore "./IoTmate-backend/IoTmate-backend.csproj"
+COPY ["IoTmate.Api/IoTmate.Api.csproj", "IoTmate.Api/"]
+RUN dotnet restore "./IoTmate.Api/IoTmate.Api.csproj"
 COPY . .
-WORKDIR "/src/IoTmate-backend"
-RUN dotnet build "./IoTmate-backend.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/IoTmate.Api"
+RUN dotnet build "./IoTmate.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./IoTmate-backend.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./IoTmate.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "IoTmate-backend.dll"]
+ENTRYPOINT ["dotnet", "IoTmate.Api.dll"]

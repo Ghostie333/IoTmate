@@ -4,3 +4,8 @@
 /IoTmate-backend/.vs
 /IoTmate-backend/IoTmate-backend/obj
 /IoTmate-backend/IoTmate-backend/wwwroot/lib
+/.vs
+/IoTmate.Api/obj
+/IoTmate.Dto/obj
+/IoTmate.Model/obj
+/IoTmate.Repository/obj
