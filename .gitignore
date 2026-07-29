@@ -10,3 +10,9 @@
 /IoTmate.Model/obj
 /IoTmate.Repository/obj
 .env
+/IoTmate.Api/bin
+/IoTmate.Model/bin
+/IoTmate.Repository/bin
+/IoTmate.Services/bin
+/IoTmate.Services/obj
+/IoTmate.Dto/bin

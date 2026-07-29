@@ -29,6 +29,7 @@
     <ProjectReference Include="..\IoTmate.Dto\IoTmate.Dto.csproj" />
     <ProjectReference Include="..\IoTmate.Model\IoTmate.Model.csproj" />
     <ProjectReference Include="..\IoTmate.Repository\IoTmate.Repository.csproj" />
+    <ProjectReference Include="..\IoTmate.Services\IoTmate.Services.csproj" />
   </ItemGroup>
 
 </Project>

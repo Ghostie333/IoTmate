@@ -16,6 +16,7 @@ COPY ["IoTmate.Api/IoTmate.Api.csproj", "IoTmate.Api/"]
 COPY ["IoTmate.Dto/IoTmate.Dto.csproj", "IoTmate.Dto/"]
 COPY ["IoTmate.Model/IoTmate.Model.csproj", "IoTmate.Model/"]
 COPY ["IoTmate.Repository/IoTmate.Repository.csproj", "IoTmate.Repository/"]
+COPY ["IoTmate.Services/IoTmate.Services.csproj", "IoTmate.Services/"]
 
 RUN dotnet restore "IoTmate.Api/IoTmate.Api.csproj"
 
