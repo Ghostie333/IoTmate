@@ -1,8 +1,11 @@
 using IoTmate.Model;
 using IoTmate.Model.Entities;
 using IoTmate.Services.Auth;
+using IoTmate.Services.Mqtt;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using IoTmate.Repository.Devices;
+using IoTmate.Services.Devices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +32,9 @@ builder.Services.AddControllers();
 builder.Services.AddAutoMapper(cfg => cfg.AddMaps(AppDomain.CurrentDomain.GetAssemblies()));
 
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddHostedService<MqttBrokerListenerService>();
+builder.Services.AddScoped<IDeviceRepository, DeviceRepository>();
+builder.Services.AddScoped<IDeviceService, DeviceService>();
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();

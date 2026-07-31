@@ -8,6 +8,7 @@ namespace IoTmate.Model
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
+        public DbSet<Device> Devices { get; set; }
         public ApplicationDbContext() : base() {}
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) {}
 
@@ -16,6 +17,7 @@ namespace IoTmate.Model
             base.OnModelCreating(builder);
 
             builder.ApplyConfiguration(new ApplicationUserConfiguration());
+            builder.ApplyConfiguration(new DeviceConfiguration());
         }
     }
 }
