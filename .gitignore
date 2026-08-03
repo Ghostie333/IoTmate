@@ -16,3 +16,5 @@
 /IoTmate.Services/bin
 /IoTmate.Services/obj
 /IoTmate.Dto/bin
+/IoTmate.IntegrationTests/bin
+/IoTmate.IntegrationTests/obj
