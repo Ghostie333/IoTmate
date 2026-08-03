@@ -116,18 +116,10 @@ namespace IoTmate.Model.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("UserId1")
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
                     b.HasIndex("DeviceId")
                         .IsUnique();
-
-                    b.HasIndex("UserId1");
 
                     b.ToTable("Devices");
                 });
@@ -262,15 +254,6 @@ namespace IoTmate.Model.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("IoTmate.Model.Entities.Device", b =>
-                {
-                    b.HasOne("IoTmate.Model.Entities.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId1");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

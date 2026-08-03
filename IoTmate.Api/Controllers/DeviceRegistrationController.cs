@@ -13,11 +13,6 @@ namespace IoTmate.Api.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> RegisterDevice([FromBody] RegisterDeviceRequestDto request)
         {
-            if (string.IsNullOrWhiteSpace(request.DeviceId))
-            {
-                return BadRequest(new { message = "DeviceId (MAC address) is required." });
-            }
-
             // Register device with service
             var rawSecretToken = await _deviceService.RegisterDeviceAsync(request.DeviceId, request.Name);
 

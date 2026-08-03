@@ -38,9 +38,7 @@ namespace IoTmate.Repository.Devices
         public async Task<bool> ValidateCredentialsAsync(string deviceId, string secretToken)
         {
             if (string.IsNullOrWhiteSpace(deviceId) || string.IsNullOrWhiteSpace(secretToken))
-            {
                 return false;
-            }
 
             var normalizedDeviceId = deviceId.Trim().ToUpperInvariant();
 
@@ -49,19 +47,12 @@ namespace IoTmate.Repository.Devices
                 .FirstOrDefaultAsync(d => d.DeviceId == normalizedDeviceId);
 
             if (device == null || string.IsNullOrEmpty(device.SecretToken))
-            {
                 return false;
-            }
 
             var incomingHash = HashToken(secretToken);
 
             var storedHashBytes = Encoding.UTF8.GetBytes(device.SecretToken);
             var incomingHashBytes = Encoding.UTF8.GetBytes(incomingHash);
-
-            if (storedHashBytes.Length != incomingHashBytes.Length)
-            {
-                return false;
-            }
 
             return CryptographicOperations.FixedTimeEquals(storedHashBytes, incomingHashBytes);
         }

@@ -1,7 +1,7 @@
-﻿using MQTTnet;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
+using MQTTnet;
 
 namespace IoTmate.Services.Mqtt
 {
@@ -10,17 +10,14 @@ namespace IoTmate.Services.Mqtt
         private readonly IMqttClient _mqttClient;
         private readonly MqttClientOptions _mqttOptions;
         private readonly ILogger<MqttBrokerListenerService> _logger;
-
-        public MqttBrokerListenerService(
-            IConfiguration configuration,
-            ILogger<MqttBrokerListenerService> logger)
+        public MqttBrokerListenerService(IConfiguration configuration, ILogger<MqttBrokerListenerService> logger)
         {
             _logger = logger;
             var factory = new MqttClientFactory();
             _mqttClient = factory.CreateMqttClient();
 
             // Settings from appsettings.json
-            var mqttHost = configuration["MqttSettings:Host"] ?? "mosquitto";
+            var mqttHost = configuration["MqttSettings:Host"];
             var mqttPort = configuration.GetValue<int>("MqttSettings:Port", 1883);
             var username = configuration["MqttSettings:Username"];
             var password = configuration["MqttSettings:Password"];
@@ -32,31 +29,24 @@ namespace IoTmate.Services.Mqtt
                 .WithClientId(clientId)
                 .WithCleanSession()
                 .Build();
-        }
 
+        }
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            // Wait for HTTP server to start
+            await Task.Delay(2000, stoppingToken);
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    if (!_mqttClient.IsConnected)
-                    {
-                        _logger.LogInformation("Connecting to MQTT Broker at {Host}:{Port}...",
-                            _mqttOptions.ChannelOptions, 1883);
-
-                        await _mqttClient.ConnectAsync(_mqttOptions, stoppingToken);
-
-                        _logger.LogInformation("Successfully connected to MQTT Broker!");
-
-                        await _mqttClient.SubscribeAsync("devices/+/telemetry", cancellationToken: stoppingToken);
-                    }
-
-                    await Task.Delay(5000, stoppingToken);
+                    _logger.LogInformation("Connecting to MQTT Broker...");
+                    await _mqttClient.ConnectAsync(_mqttOptions, stoppingToken);
+                    break;
                 }
-                catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
+                catch (Exception)
                 {
-                    _logger.LogError(ex, "Could not connect to MQTT Broker. Retrying in 5 seconds...");
+                    _logger.LogWarning("Could not connect to MQTT Broker. Retrying in 5 seconds...");
                     await Task.Delay(5000, stoppingToken);
                 }
             }

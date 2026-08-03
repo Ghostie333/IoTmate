@@ -12,8 +12,7 @@ namespace IoTmate.Model.Entities
         public string SecretToken { get; set; } = string.Empty;
         public bool IsOnline { get; set; }
         public DateTime LastSeenAt { get; set; }
-
-        public Guid UserId { get; set; }
-        public ApplicationUser? User { get; set; }
+    
+        // TODO: Add containers for devices
     }
 }
