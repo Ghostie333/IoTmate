@@ -60,7 +60,7 @@ namespace IoTmate.Repository.Devices
         private static string HashToken(string token)
         {
             var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
-            return Convert.ToHexString(bytes);
+            return Convert.ToHexStringLower(bytes);
         }
     }
 }

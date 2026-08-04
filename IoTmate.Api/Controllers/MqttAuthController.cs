@@ -17,7 +17,7 @@ namespace IoTmate.Api.Controllers
         public async Task<IActionResult> AuthenticateUser([FromForm] MqttUserAuthRequestDto request)
         {
             // Check if user is IoTmate backend, Timing attack protection
-            if (isBackendServiceUsername(request.Username) && isBackendServicePassword(request.Password))
+            if (IsBackendServiceUsername(request.Username) && IsBackendServicePassword(request.Password))
             {
                 // Inform go-auth extension that user is superuser (Admin)
                 Response.Headers.Append("X-Superuser", "true");
@@ -34,7 +34,7 @@ namespace IoTmate.Api.Controllers
         [HttpPost("acl")]
         public IActionResult CheckAcl([FromForm] MqttAclCheckRequestDto request)
         {
-            if (isBackendServiceUsername(request.Username))
+            if (IsBackendServiceUsername(request.Username))
                 return Ok();
 
             bool isAllowed = _deviceService.IsTopicAllowedForDevice(request.Username, request.Topic);
@@ -43,7 +43,7 @@ namespace IoTmate.Api.Controllers
 
         #region Private helpers
         // Helper for checking if username is IoTmate-backend user username
-        private bool isBackendServiceUsername(string username)
+        private bool IsBackendServiceUsername(string username)
         {
             var exceptedUsername = _configuration["MqttSettings:Username"];
             if (string.IsNullOrEmpty(exceptedUsername) || string.IsNullOrEmpty(username))
@@ -57,9 +57,9 @@ namespace IoTmate.Api.Controllers
 
 
         // Helper for checking if password is IoTmate-backend user password
-        private bool isBackendServicePassword(string password)
+        private bool IsBackendServicePassword(string password)
         {
-            var exceptedPassword = _configuration["MqttSettings:Username"];
+            var exceptedPassword = _configuration["MqttSettings:Password"];
             if (string.IsNullOrEmpty(exceptedPassword) || string.IsNullOrEmpty(password))
                 return false;
 

@@ -9,7 +9,8 @@ namespace IoTmate.Model.Entities
         public Guid Id { get; init; }
         public string DeviceId { get; init; } = string.Empty;
         public string Name { get; set; } = string.Empty;
-        public string SecretToken { get; set; } = string.Empty;
+        public string SecretToken { get; set; } = string.Empty; // For logging to MQTT
+        public string DeviceSecret { get; set; } = string.Empty;
         public bool IsOnline { get; set; }
         public DateTime LastSeenAt { get; set; }
     

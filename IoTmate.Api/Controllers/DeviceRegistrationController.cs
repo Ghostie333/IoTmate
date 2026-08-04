@@ -14,11 +14,11 @@ namespace IoTmate.Api.Controllers
         public async Task<IActionResult> RegisterDevice([FromBody] RegisterDeviceRequestDto request)
         {
             // Register device with service
-            var rawSecretToken = await _deviceService.RegisterDeviceAsync(request.DeviceId, request.Name);
+            var rawSecretToken = await _deviceService.RegisterDeviceAsync(request.DeviceId, request.DeviceSecret);
 
             if (rawSecretToken == null)
             {
-                return Conflict(new { message = "Device with this DeviceId is already registered." });
+                return Conflict(new { message = "Failed to get secretToken" });
             }
 
             var normalizedMac = request.DeviceId.Trim().ToUpperInvariant();

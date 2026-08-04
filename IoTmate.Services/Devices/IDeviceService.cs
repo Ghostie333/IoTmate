@@ -8,6 +8,6 @@ namespace IoTmate.Services.Devices
     {
         Task<bool> ValidateCredentialsAsync(string deviceId, string secretToken);
         bool IsTopicAllowedForDevice(string deviceId, string topic);
-        Task<string?> RegisterDeviceAsync(string deviceId, string? name);
+        Task<string?> RegisterDeviceAsync(string deviceId, string deviceSecret);
     }
 }

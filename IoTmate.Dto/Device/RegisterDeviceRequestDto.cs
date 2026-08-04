@@ -8,8 +8,9 @@ namespace IoTmate.Dto.Device
 {
     public record RegisterDeviceRequestDto
     {
-        [Required(AllowEmptyStrings = false, ErrorMessage = "Wrong MAC format")]
+        [Required(AllowEmptyStrings = false, ErrorMessage = "Wrong MAC")]
         public required string DeviceId { get; set; }
-        public string? Name { get; set; }
+        [Required(AllowEmptyStrings = false, ErrorMessage = "Wrong deviceSecret")]
+        public required string DeviceSecret { get; set; }
     }
 }

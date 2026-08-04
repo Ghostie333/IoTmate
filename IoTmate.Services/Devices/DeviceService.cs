@@ -1,68 +1,84 @@
-﻿using IoTmate.Model.Entities;
-using IoTmate.Repository.Devices;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
+using IoTmate.Model.Entities;
+using IoTmate.Repository.Devices;
 
-namespace IoTmate.Services.Devices
+namespace IoTmate.Services.Devices;
+
+public class DeviceService(IDeviceRepository deviceRepository) : IDeviceService
 {
-    public class DeviceService(IDeviceRepository deviceRepository) : IDeviceService
+    private readonly IDeviceRepository _deviceRepository = deviceRepository;
+
+    public async Task<bool> ValidateCredentialsAsync(string deviceId, string secretToken)
     {
-        private readonly IDeviceRepository _deviceRepository = deviceRepository;
+        return await _deviceRepository.ValidateCredentialsAsync(deviceId, secretToken);
+    }
 
-        public async Task<bool> ValidateCredentialsAsync(string deviceId, string secretToken)
+    public bool IsTopicAllowedForDevice(string deviceId, string topic)
+    {
+        if (string.IsNullOrWhiteSpace(deviceId) || string.IsNullOrWhiteSpace(topic))
         {
-            return await _deviceRepository.ValidateCredentialsAsync(deviceId, secretToken);
+            return false;
         }
 
-        public bool IsTopicAllowedForDevice(string deviceId, string topic)
+        var normalizedMac = deviceId.Trim().ToUpperInvariant();
+
+        // ACL rule - device is only granted access to devices/{MAC} and its subtopics (devices/{MAC}/*).
+        return topic.StartsWith($"devices/{normalizedMac}/", StringComparison.OrdinalIgnoreCase) ||
+               topic.Equals($"devices/{normalizedMac}", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public async Task<string?> RegisterDeviceAsync(string deviceId, string deviceSecret)
+    {
+        if (string.IsNullOrWhiteSpace(deviceId))
         {
-            if (string.IsNullOrWhiteSpace(deviceId) || string.IsNullOrWhiteSpace(topic))
+            return null;
+        }
+
+        var normalizedMac = deviceId.Trim().ToUpperInvariant();
+
+        var existingDevice = await _deviceRepository.GetByDeviceIdAsync(normalizedMac);
+        if (existingDevice != null)
+        {
+            // Check if hardware secret is correct
+            if (!string.Equals(existingDevice.DeviceSecret, deviceSecret, StringComparison.Ordinal))
             {
-                return false;
+                return null;
             }
 
-            var normalizedMac = deviceId.Trim().ToUpperInvariant();
+            // Set new session token for MQTT
+            string newRawToken = GenerateSecureToken();
+            existingDevice.SecretToken = HashToken(newRawToken);
 
-            // ACL rule - device is only granted access to devices/{MAC} and its subtopics (devices/{MAC}/*).
-            return topic.StartsWith($"devices/{normalizedMac}/", StringComparison.OrdinalIgnoreCase) ||
-                   topic.Equals($"devices/{normalizedMac}", StringComparison.OrdinalIgnoreCase);
+            await _deviceRepository.SaveDeviceAsync(existingDevice);
+            return newRawToken;
         }
 
-        public async Task<string?> RegisterDeviceAsync(string deviceId, string? name)
+        string rawSecretToken = GenerateSecureToken();
+        string tokenHash = HashToken(rawSecretToken);
+
+        var newDevice = new Device
         {
-            var normalizedMac = deviceId.Trim().ToUpperInvariant();
+            DeviceId = normalizedMac,
+            DeviceSecret = deviceSecret,
+            Name = $"ESP32-{normalizedMac}",
+            SecretToken = tokenHash,
+        };
 
-            var existingDevice = await _deviceRepository.GetByDeviceIdAsync(normalizedMac);
-            if (existingDevice != null)
-            {
-                return null; // Device exists
-            }
+        bool saved = await _deviceRepository.SaveDeviceAsync(newDevice);
+        return saved ? rawSecretToken : null;
+    }
 
-            string rawSecretToken = GenerateSecureToken();
-            string tokenHash = HashToken(rawSecretToken);
+    private static string GenerateSecureToken()
+    {
+        var randomBytes = new byte[32];
+        RandomNumberGenerator.Fill(randomBytes);
+        return Convert.ToHexStringLower(randomBytes); // Lowercase dla spójności z C++ / Mosquitto
+    }
 
-            var newDevice = new Device
-            {
-                DeviceId = normalizedMac,
-                Name = name ?? $"ESP32-{normalizedMac}",
-                SecretToken = tokenHash,
-            };
-
-            bool saved = await _deviceRepository.SaveDeviceAsync(newDevice);
-            return saved ? rawSecretToken : null;
-        }
-
-        private static string GenerateSecureToken()
-        {
-            var randomBytes = new byte[32];
-            RandomNumberGenerator.Fill(randomBytes);
-            return Convert.ToHexString(randomBytes);
-        }
-
-        private static string HashToken(string token)
-        {
-            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
-            return Convert.ToHexString(bytes);
-        }
+    private static string HashToken(string token)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+        return Convert.ToHexStringLower(bytes);
     }
 }
