@@ -8,7 +8,7 @@ namespace IoTmate.Dto.Device
 {
     public record RegisterDeviceResponseDto
     {
-        public string DeviceId { get; set; }
-        public string SecretToken { get; set; }
+        public required string DeviceId { get; set; }
+        public required string SecretToken { get; set; }
     }
 }

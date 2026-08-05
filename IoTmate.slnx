@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="IoTmate.Api/IoTmate.Api.csproj" Id="09027e04-b2e2-46bc-8ec2-36e60d4ea042" />
+  <Project Path="IoTmate.Common/IoTmate.Common.csproj" Id="5a8bb53e-924f-48fc-8325-711b7679589d" />
   <Project Path="IoTmate.Dto/IoTmate.Dto.csproj" Id="8ff12ce4-036d-43c1-b5e0-953c28692bd7" />
   <Project Path="IoTmate.IntegrationTests/IoTmate.IntegrationTests.csproj" Id="cecb858b-ccfd-4e8f-a9f9-5b4669ac0bcc" />
   <Project Path="IoTmate.Model/IoTmate.Model.csproj" />

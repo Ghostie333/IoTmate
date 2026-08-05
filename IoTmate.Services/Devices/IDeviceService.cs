@@ -1,4 +1,6 @@
-﻿using System;
+﻿using IoTmate.Dto.Device;
+using IoTmate.Model.Entities;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -8,6 +10,6 @@ namespace IoTmate.Services.Devices
     {
         Task<bool> ValidateCredentialsAsync(string deviceId, string secretToken);
         bool IsTopicAllowedForDevice(string deviceId, string topic);
-        Task<string?> RegisterDeviceAsync(string deviceId, string deviceSecret);
+        Task<DeviceRegistrationResult?> RegisterDeviceAsync(RegisterDeviceRequestDto request);
     }
 }

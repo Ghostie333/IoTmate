@@ -1,66 +1,53 @@
-﻿using IoTmate.Model;
+﻿using IoTmate.Common.Security;
+using IoTmate.Model;
 using IoTmate.Model.Entities;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace IoTmate.Repository.Devices
+namespace IoTmate.Repository.Devices;
+
+public class DeviceRepository(ApplicationDbContext dbContext) : BaseRepository(dbContext), IDeviceRepository
 {
-    public class DeviceRepository(ApplicationDbContext dbContext) : BaseRepository(dbContext), IDeviceRepository
+    public async Task<bool> SaveDeviceAsync(Device device)
     {
-        public async Task<bool> SaveDeviceAsync(Device device)
+        if (DbContext.Entry(device).State == EntityState.Detached)
         {
-            DbContext.Entry(device).State = device.Id == default ? EntityState.Added : EntityState.Modified;
+            DbContext.Devices.Update(device);
+        }
 
-            try
-            {
-                await DbContext.SaveChangesAsync();
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-
+        try
+        {
+            await DbContext.SaveChangesAsync();
             return true;
         }
-
-        public async Task<Device?> GetByDeviceIdAsync(string deviceId)
+        catch (Exception)
         {
-            if (string.IsNullOrWhiteSpace(deviceId))
-                return null;
-
-            var normalizedDeviceId = deviceId.Trim().ToUpperInvariant();
-            return await DbContext.Devices.SingleOrDefaultAsync(d => d.DeviceId == normalizedDeviceId);
+            return false;
         }
+    }
 
-        public async Task<bool> ValidateCredentialsAsync(string deviceId, string secretToken)
-        {
-            if (string.IsNullOrWhiteSpace(deviceId) || string.IsNullOrWhiteSpace(secretToken))
-                return false;
+    public async Task<Device?> GetByDeviceIdAsync(string deviceId)
+    {
+        if (string.IsNullOrWhiteSpace(deviceId))
+            return null;
 
-            var normalizedDeviceId = deviceId.Trim().ToUpperInvariant();
+        var normalizedDeviceId = deviceId.Trim().ToUpperInvariant();
+        return await DbContext.Devices.FirstOrDefaultAsync(d => d.DeviceId == normalizedDeviceId);
+    }
 
-            var device = await DbContext.Devices
-                .AsNoTracking()
-                .FirstOrDefaultAsync(d => d.DeviceId == normalizedDeviceId);
+    public async Task<bool> ValidateCredentialsAsync(string deviceId, string secretToken)
+    {
+        if (string.IsNullOrWhiteSpace(deviceId) || string.IsNullOrWhiteSpace(secretToken))
+            return false;
 
-            if (device == null || string.IsNullOrEmpty(device.SecretToken))
-                return false;
+        var normalizedDeviceId = deviceId.Trim().ToUpperInvariant();
 
-            var incomingHash = HashToken(secretToken);
+        var device = await DbContext.Devices
+            .AsNoTracking()
+            .FirstOrDefaultAsync(d => d.DeviceId == normalizedDeviceId);
 
-            var storedHashBytes = Encoding.UTF8.GetBytes(device.SecretToken);
-            var incomingHashBytes = Encoding.UTF8.GetBytes(incomingHash);
+        if (device == null || string.IsNullOrEmpty(device.SecretToken))
+            return false;
 
-            return CryptographicOperations.FixedTimeEquals(storedHashBytes, incomingHashBytes);
-        }
-
-        private static string HashToken(string token)
-        {
-            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
-            return Convert.ToHexStringLower(bytes);
-        }
+        return CryptoUtils.FixedTimeEqualsHex(device.SecretToken, secretToken);
     }
 }

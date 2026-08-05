@@ -1,7 +1,4 @@
 ﻿using IoTmate.Model.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace IoTmate.Repository.Devices
 {

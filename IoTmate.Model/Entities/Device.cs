@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IoTmate.Model.Enums;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,14 +7,17 @@ namespace IoTmate.Model.Entities
 {
     public class Device
     {
-        public Guid Id { get; init; }
-        public string DeviceId { get; init; } = string.Empty;
+        public Guid Id { get; set; }
+        public required string DeviceId { get; set; } // MAC
+        public required string DeviceSecret { get; set; }
+        public required string SecretToken { get; set; }
         public string Name { get; set; } = string.Empty;
-        public string SecretToken { get; set; } = string.Empty; // For logging to MQTT
-        public string DeviceSecret { get; set; } = string.Empty;
+        public DeviceType DeviceType { get; set; }
         public bool IsOnline { get; set; }
         public DateTime LastSeenAt { get; set; }
-    
-        // TODO: Add containers for devices
+
+        // Relations
+        public DeviceRelayState? RelayState { get; set; } // For StripBoard
+        public ICollection<SensorReading> SensorReadings { get; set; } = []; // For sensor
     }
 }

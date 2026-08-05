@@ -11,12 +11,12 @@ namespace IoTmate.Model.Configurations
     {
         public void Configure(EntityTypeBuilder<Device> builder)
         {
-            // Id
+            // Primary Key
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id)
                 .HasDefaultValueSql("gen_random_uuid()");
 
-            // DeviceId
+            // DeviceId (MAC)
             builder.Property(x => x.DeviceId)
                 .IsRequired()
                 .HasMaxLength(200);
@@ -29,14 +29,21 @@ namespace IoTmate.Model.Configurations
                 .IsRequired()
                 .HasMaxLength(200);
 
-            // Secret token for MQTT auth
-            builder.Property(x => x.SecretToken)
+            // Secrets
+            builder.Property(x => x.DeviceSecret) // Unique device string
                 .IsRequired()
                 .HasMaxLength(256);
 
-            // Status
-            builder.Property(x => x.IsOnline).
-                HasDefaultValue(false);
+            builder.Property(x => x.SecretToken) // password for ESP to MQTT
+                .IsRequired()
+                .HasMaxLength(256);
+
+            // Status and Type
+            builder.Property(x => x.DeviceType)
+                .IsRequired();
+
+            builder.Property(x => x.IsOnline)
+                .HasDefaultValue(false);
         }
     }
 }

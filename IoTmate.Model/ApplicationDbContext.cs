@@ -1,23 +1,24 @@
-﻿using Microsoft.EntityFrameworkCore;
-using IoTmate.Model.Entities;
-//using Microsoft.AspNetCore.Identity;
+﻿using IoTmate.Model.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using IoTmate.Model.Configurations;
+using Microsoft.EntityFrameworkCore;
 
 namespace IoTmate.Model
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public DbSet<Device> Devices { get; set; }
-        public ApplicationDbContext() : base() {}
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) {}
+        public DbSet<DeviceRelayState> DeviceRelayStates { get; set; }
+        public DbSet<SensorReading> SensorReadings { get; set; }
+
+        public ApplicationDbContext() : base() { }
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            builder.ApplyConfiguration(new ApplicationUserConfiguration());
-            builder.ApplyConfiguration(new DeviceConfiguration());
+            // Takes all config classes (DeviceConfiguration, DeviceRelayStateConfiguration, SensorReadingConfiguration itp.)
+            builder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
         }
     }
 }

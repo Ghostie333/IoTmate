@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
@@ -10,13 +11,19 @@ namespace IoTmate.Services.Mqtt
         private readonly IMqttClient _mqttClient;
         private readonly MqttClientOptions _mqttOptions;
         private readonly ILogger<MqttBrokerListenerService> _logger;
-        public MqttBrokerListenerService(IConfiguration configuration, ILogger<MqttBrokerListenerService> logger)
+        private readonly IServiceScopeFactory _scopeFactory;
+
+        public MqttBrokerListenerService(
+            IConfiguration configuration,
+            ILogger<MqttBrokerListenerService> logger,
+            IServiceScopeFactory scopeFactory)
         {
             _logger = logger;
+            _scopeFactory = scopeFactory;
+
             var factory = new MqttClientFactory();
             _mqttClient = factory.CreateMqttClient();
 
-            // Settings from appsettings.json
             var mqttHost = configuration["MqttSettings:Host"];
             var mqttPort = configuration.GetValue<int>("MqttSettings:Port", 1883);
             var username = configuration["MqttSettings:Username"];
@@ -30,10 +37,59 @@ namespace IoTmate.Services.Mqtt
                 .WithCleanSession()
                 .Build();
 
+            // Po każdym (re)connect odtwarzamy subskrypcje
+            _mqttClient.ConnectedAsync += OnConnectedAsync;
+
+            // Tu ląduje każda wiadomość ze wszystkich subskrybowanych topiców
+            _mqttClient.ApplicationMessageReceivedAsync += OnMessageReceivedAsync;
         }
+
+        private async Task OnConnectedAsync(MqttClientConnectedEventArgs args)
+        {
+            _logger.LogInformation("Connected to MQTT Broker. Subscribing to topics...");
+
+            // Wildcard "#" złapie WSZYSTKIE topiki na brokerze.
+            await _mqttClient.SubscribeAsync(
+                new MqttClientSubscribeOptionsBuilder()
+                    .WithTopicFilter(f => f.WithTopic("#"))
+                    .Build());
+        }
+
+        private async Task OnMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs args)
+        {
+            var topic = args.ApplicationMessage.Topic;
+            var payload = args.ApplicationMessage.ConvertPayloadToString();
+
+            _logger.LogInformation("Received message on {Topic}: {Payload}", topic, payload);
+
+            try
+            {
+                // Scope, bo tu wchodzimy do logiki z DbContextem / serwisami scoped
+                using var scope = _scopeFactory.CreateScope();
+                var router = scope.ServiceProvider.GetRequiredService<IMqttMessageRouterService>();
+
+                // POPRAWKA: Przekazujemy CancellationToken.None lub default
+                await router.HandleAsync(topic, payload, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while processing MQTT message from topic {Topic}", topic);
+            }
+        }
+
+        public async Task PublishAsync(string topic, string payload, CancellationToken ct = default)
+        {
+            var message = new MqttApplicationMessageBuilder()
+                .WithTopic(topic)
+                .WithPayload(payload)
+                .WithRetainFlag(false)
+                .Build();
+
+            await _mqttClient.PublishAsync(message, ct);
+        }
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            // Wait for HTTP server to start
             await Task.Delay(2000, stoppingToken);
 
             while (!stoppingToken.IsCancellationRequested)
@@ -50,6 +106,9 @@ namespace IoTmate.Services.Mqtt
                     await Task.Delay(5000, stoppingToken);
                 }
             }
+
+            // Trzymamy serwis żywy dopóki nie przyjdzie cancellation
+            await Task.Delay(Timeout.Infinite, stoppingToken).ContinueWith(_ => { }, stoppingToken);
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)

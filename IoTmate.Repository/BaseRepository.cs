@@ -5,13 +5,8 @@ using System.Text;
 
 namespace IoTmate.Repository
 {
-    public abstract class BaseRepository
+    public abstract class BaseRepository(ApplicationDbContext dbContext)
     {
-        protected ApplicationDbContext DbContext;
-
-        public BaseRepository(ApplicationDbContext dbContext)
-        {
-            DbContext = dbContext;
-        }
+        protected ApplicationDbContext DbContext = dbContext;
     }
 }

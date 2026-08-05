@@ -1,17 +1,19 @@
-﻿using System.Security.Cryptography;
-using System.Text;
+﻿using IoTmate.Common.Security;
+using IoTmate.Dto.Device;
 using IoTmate.Model.Entities;
+using IoTmate.Model.Enums;
 using IoTmate.Repository.Devices;
+using Microsoft.AspNetCore.Identity;
 
 namespace IoTmate.Services.Devices;
 
 public class DeviceService(IDeviceRepository deviceRepository) : IDeviceService
 {
-    private readonly IDeviceRepository _deviceRepository = deviceRepository;
+    private readonly PasswordHasher<Device> _passwordHasher = new();
 
     public async Task<bool> ValidateCredentialsAsync(string deviceId, string secretToken)
     {
-        return await _deviceRepository.ValidateCredentialsAsync(deviceId, secretToken);
+        return await deviceRepository.ValidateCredentialsAsync(deviceId, secretToken);
     }
 
     public bool IsTopicAllowedForDevice(string deviceId, string topic)
@@ -22,63 +24,83 @@ public class DeviceService(IDeviceRepository deviceRepository) : IDeviceService
         }
 
         var normalizedMac = deviceId.Trim().ToUpperInvariant();
+        var prefix = $"devices/{normalizedMac}";
 
         // ACL rule - device is only granted access to devices/{MAC} and its subtopics (devices/{MAC}/*).
-        return topic.StartsWith($"devices/{normalizedMac}/", StringComparison.OrdinalIgnoreCase) ||
-               topic.Equals($"devices/{normalizedMac}", StringComparison.OrdinalIgnoreCase);
+        return topic.Equals(prefix, StringComparison.OrdinalIgnoreCase) ||
+               topic.StartsWith($"{prefix}/", StringComparison.OrdinalIgnoreCase);
     }
 
-    public async Task<string?> RegisterDeviceAsync(string deviceId, string deviceSecret)
+    public async Task<DeviceRegistrationResult?> RegisterDeviceAsync(RegisterDeviceRequestDto request)
     {
-        if (string.IsNullOrWhiteSpace(deviceId))
+        ArgumentNullException.ThrowIfNull(request);
+
+        if (string.IsNullOrWhiteSpace(request.DeviceId) || string.IsNullOrWhiteSpace(request.DeviceSecret))
         {
             return null;
         }
 
-        var normalizedMac = deviceId.Trim().ToUpperInvariant();
+        var normalizedMac = request.DeviceId.Trim().ToUpperInvariant();
+        var existingDevice = await deviceRepository.GetByDeviceIdAsync(normalizedMac);
 
-        var existingDevice = await _deviceRepository.GetByDeviceIdAsync(normalizedMac);
+        // If the device already exists
         if (existingDevice != null)
         {
-            // Check if hardware secret is correct
-            if (!string.Equals(existingDevice.DeviceSecret, deviceSecret, StringComparison.Ordinal))
+            // Verify the hashed DeviceSecret
+            var verificationResult = _passwordHasher.VerifyHashedPassword(
+                existingDevice,
+                existingDevice.DeviceSecret,
+                request.DeviceSecret
+            );
+
+            if (verificationResult == PasswordVerificationResult.Failed)
             {
-                return null;
+                return null; // Invalid DeviceSecret
             }
 
-            // Set new session token for MQTT
-            string newRawToken = GenerateSecureToken();
-            existingDevice.SecretToken = HashToken(newRawToken);
+            // Refresh the MQTT session token using the static CryptoUtils
+            string newRawToken = CryptoUtils.GenerateSecureToken();
+            existingDevice.SecretToken = CryptoUtils.HashTokenToHex(newRawToken);
 
-            await _deviceRepository.SaveDeviceAsync(existingDevice);
-            return newRawToken;
+            await deviceRepository.SaveDeviceAsync(existingDevice);
+            return new DeviceRegistrationResult { Device = existingDevice, RawSecretToken = newRawToken };
         }
 
-        string rawSecretToken = GenerateSecureToken();
-        string tokenHash = HashToken(rawSecretToken);
+        // If the device is being created for the first time
+        string rawSecretToken = CryptoUtils.GenerateSecureToken();
+        string tokenHash = CryptoUtils.HashTokenToHex(rawSecretToken);
 
         var newDevice = new Device
         {
             DeviceId = normalizedMac,
-            DeviceSecret = deviceSecret,
             Name = $"ESP32-{normalizedMac}",
+            DeviceSecret = "",
             SecretToken = tokenHash,
+            DeviceType = request.DeviceType
         };
 
-        bool saved = await _deviceRepository.SaveDeviceAsync(newDevice);
-        return saved ? rawSecretToken : null;
+        // Hash the DeviceSecret received from the ESP32
+        newDevice.DeviceSecret = _passwordHasher.HashPassword(newDevice, request.DeviceSecret);
+
+        if (request.DeviceType == DeviceType.PowerStrip)
+        {
+            newDevice.RelayState = new DeviceRelayState
+            {
+                Outlets = CreateInitialOutlets(request.OutletsCount ?? 1)
+            };
+        }
+
+        await deviceRepository.SaveDeviceAsync(newDevice);
+        return new DeviceRegistrationResult { Device = newDevice, RawSecretToken = rawSecretToken };
     }
 
-    private static string GenerateSecureToken()
+    private static Dictionary<string, bool> CreateInitialOutlets(int count)
     {
-        var randomBytes = new byte[32];
-        RandomNumberGenerator.Fill(randomBytes);
-        return Convert.ToHexStringLower(randomBytes); // Lowercase dla spójności z C++ / Mosquitto
-    }
-
-    private static string HashToken(string token)
-    {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
-        return Convert.ToHexStringLower(bytes);
+        var outlets = new Dictionary<string, bool>();
+        for (int i = 1; i <= count; i++)
+        {
+            outlets.Add($"outlet{i}", false);
+        }
+        return outlets;
     }
 }
