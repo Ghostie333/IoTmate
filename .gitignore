@@ -20,3 +20,4 @@
 /IoTmate.IntegrationTests/obj
 /IoTmate.Common/obj
 /IoTmate.Common/bin
+/mosquitto/letsencrypt/

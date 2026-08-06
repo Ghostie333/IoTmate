@@ -16,8 +16,15 @@ namespace IoTmate.Model.Entities
         public bool IsOnline { get; set; }
         public DateTime LastSeenAt { get; set; }
 
+        // Latest sensor reading with field name for Rules
+        public Dictionary<string, float>? LastReading { get; set; }
+
+        // Room assignment. A device may be unassigned (null). At most one room at a time.
+        public Guid? RoomId { get; set; }
+        public Room? Room { get; set; }
+
         // Relations
-        public DeviceRelayState? RelayState { get; set; } // For StripBoard
+        public DeviceRelayState? RelayState { get; set; } // For power strip
         public ICollection<SensorReading> SensorReadings { get; set; } = []; // For sensor
     }
 }

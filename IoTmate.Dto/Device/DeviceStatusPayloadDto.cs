@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace IoTmate.Dto.Device
 {
     public record DeviceStatusPayloadDto
     {
-        [JsonPropertyName("status")]
-        public string Status { get; set; } = string.Empty;
-
-        [JsonPropertyName("isOnline")]
+        // The device publishes {"online":true|false} on the status topic.
+        [JsonPropertyName("online")]
         public bool IsOnline { get; set; }
     }
 }

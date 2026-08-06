@@ -112,6 +112,9 @@ namespace IoTmate.Model.Migrations
                         .HasColumnType("boolean")
                         .HasDefaultValue(false);
 
+                    b.Property<Dictionary<string, float>>("LastReading")
+                        .HasColumnType("jsonb");
+
                     b.Property<DateTime>("LastSeenAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -119,6 +122,9 @@ namespace IoTmate.Model.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("RoomId")
+                        .HasColumnType("uuid");
 
                     b.Property<string>("SecretToken")
                         .IsRequired()
@@ -129,6 +135,8 @@ namespace IoTmate.Model.Migrations
 
                     b.HasIndex("DeviceId")
                         .IsUnique();
+
+                    b.HasIndex("RoomId");
 
                     b.ToTable("Devices");
                 });
@@ -145,6 +153,111 @@ namespace IoTmate.Model.Migrations
                     b.HasKey("DeviceId");
 
                     b.ToTable("DeviceRelayStates");
+                });
+
+            modelBuilder.Entity("IoTmate.Model.Entities.Room", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("TimeZoneId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("IoTmate.Model.Entities.RoomMember", b =>
+                {
+                    b.Property<Guid>("RoomId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
+                    b.HasKey("RoomId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RoomMembers");
+                });
+
+            modelBuilder.Entity("IoTmate.Model.Entities.Rule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasDefaultValueSql("gen_random_uuid()");
+
+                    b.Property<int>("Action")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Operation")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("RoomId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RuleType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SensorFieldName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<float>("SensorRuleValue")
+                        .HasColumnType("real");
+
+                    b.Property<Guid?>("SourceDeviceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TargetDeviceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("TargetOutletNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TimeHour")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TimeMinute")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SourceDeviceId");
+
+                    b.HasIndex("TargetDeviceId");
+
+                    b.HasIndex("RoomId", "IsEnabled");
+
+                    b.ToTable("Rules");
                 });
 
             modelBuilder.Entity("IoTmate.Model.Entities.SensorReading", b =>
@@ -304,6 +417,16 @@ namespace IoTmate.Model.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("IoTmate.Model.Entities.Device", b =>
+                {
+                    b.HasOne("IoTmate.Model.Entities.Room", "Room")
+                        .WithMany("Devices")
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Room");
+                });
+
             modelBuilder.Entity("IoTmate.Model.Entities.DeviceRelayState", b =>
                 {
                     b.HasOne("IoTmate.Model.Entities.Device", "Device")
@@ -313,6 +436,50 @@ namespace IoTmate.Model.Migrations
                         .IsRequired();
 
                     b.Navigation("Device");
+                });
+
+            modelBuilder.Entity("IoTmate.Model.Entities.RoomMember", b =>
+                {
+                    b.HasOne("IoTmate.Model.Entities.Room", "Room")
+                        .WithMany("Members")
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("IoTmate.Model.Entities.ApplicationUser", "User")
+                        .WithMany("RoomMemberships")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Room");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("IoTmate.Model.Entities.Rule", b =>
+                {
+                    b.HasOne("IoTmate.Model.Entities.Room", "Room")
+                        .WithMany("Rules")
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("IoTmate.Model.Entities.Device", "SourceDevice")
+                        .WithMany()
+                        .HasForeignKey("SourceDeviceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("IoTmate.Model.Entities.Device", "TargetDevice")
+                        .WithMany()
+                        .HasForeignKey("TargetDeviceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Room");
+
+                    b.Navigation("SourceDevice");
+
+                    b.Navigation("TargetDevice");
                 });
 
             modelBuilder.Entity("IoTmate.Model.Entities.SensorReading", b =>
@@ -377,11 +544,25 @@ namespace IoTmate.Model.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("IoTmate.Model.Entities.ApplicationUser", b =>
+                {
+                    b.Navigation("RoomMemberships");
+                });
+
             modelBuilder.Entity("IoTmate.Model.Entities.Device", b =>
                 {
                     b.Navigation("RelayState");
 
                     b.Navigation("SensorReadings");
+                });
+
+            modelBuilder.Entity("IoTmate.Model.Entities.Room", b =>
+                {
+                    b.Navigation("Devices");
+
+                    b.Navigation("Members");
+
+                    b.Navigation("Rules");
                 });
 #pragma warning restore 612, 618
         }

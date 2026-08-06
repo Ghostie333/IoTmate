@@ -7,5 +7,7 @@ namespace IoTmate.Model.Entities
 {
     public class ApplicationUser : IdentityUser
     {
+        // Room where user is
+        public ICollection<RoomMember> RoomMemberships { get; set; } = [];
     }
 }

@@ -9,6 +9,9 @@ namespace IoTmate.Model
         public DbSet<Device> Devices { get; set; }
         public DbSet<DeviceRelayState> DeviceRelayStates { get; set; }
         public DbSet<SensorReading> SensorReadings { get; set; }
+        public DbSet<Room> Rooms { get; set; }
+        public DbSet<RoomMember> RoomMembers { get; set; }
+        public DbSet<Rule> Rules { get; set; }
 
         public ApplicationDbContext() : base() { }
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }

@@ -30,25 +30,45 @@ namespace IoTmate.Services.Mqtt
             var password = configuration["MqttSettings:Password"];
             var clientId = configuration["MqttSettings:ClientId"] ?? $"backend_{Guid.NewGuid():N}";
 
-            _mqttOptions = new MqttClientOptionsBuilder()
+            var useTls = configuration.GetValue<bool>("MqttSettings:UseTls", false);
+            var allowUntrustedCertificates = configuration.GetValue<bool>("MqttSettings:AllowUntrustedCertificates", false);
+
+            var optionsBuilder = new MqttClientOptionsBuilder()
                 .WithTcpServer(mqttHost, mqttPort)
                 .WithCredentials(username, password)
                 .WithClientId(clientId)
-                .WithCleanSession()
-                .Build();
+                .WithCleanSession();
 
-            // Po każdym (re)connect odtwarzamy subskrypcje
+            if (useTls)
+            {
+                optionsBuilder.WithTlsOptions(options =>
+                {
+                    options.UseTls();
+
+                    if (allowUntrustedCertificates)
+                    {
+                        // Allows locally generated certificates (mkcert) or self-signed ones
+                        options.WithAllowUntrustedCertificates(true);
+                        options.WithIgnoreCertificateChainErrors(true);
+                        options.WithIgnoreCertificateRevocationErrors(true);
+                    }
+                });
+            }
+
+            _mqttOptions = optionsBuilder.Build();
+
+            // Re-create subscriptions after every connect/reconnect
             _mqttClient.ConnectedAsync += OnConnectedAsync;
 
-            // Tu ląduje każda wiadomość ze wszystkich subskrybowanych topiców
+            // All messages from all subscribed topics land here
             _mqttClient.ApplicationMessageReceivedAsync += OnMessageReceivedAsync;
         }
 
         private async Task OnConnectedAsync(MqttClientConnectedEventArgs args)
         {
-            _logger.LogInformation("Connected to MQTT Broker. Subscribing to topics...");
+            _logger.LogInformation("Connected to MQTT Broker. Subscribing to topics");
 
-            // Wildcard "#" złapie WSZYSTKIE topiki na brokerze.
+            // Wildcard "#" captures ALL topics on the broker
             await _mqttClient.SubscribeAsync(
                 new MqttClientSubscribeOptionsBuilder()
                     .WithTopicFilter(f => f.WithTopic("#"))
@@ -64,11 +84,10 @@ namespace IoTmate.Services.Mqtt
 
             try
             {
-                // Scope, bo tu wchodzimy do logiki z DbContextem / serwisami scoped
+                // Create a scope because the handling logic uses scoped services (DbContext, etc.)
                 using var scope = _scopeFactory.CreateScope();
                 var router = scope.ServiceProvider.GetRequiredService<IMqttMessageRouterService>();
 
-                // POPRAWKA: Przekazujemy CancellationToken.None lub default
                 await router.HandleAsync(topic, payload, CancellationToken.None);
             }
             catch (Exception ex)
@@ -107,7 +126,7 @@ namespace IoTmate.Services.Mqtt
                 }
             }
 
-            // Trzymamy serwis żywy dopóki nie przyjdzie cancellation
+            // Keep the service alive until cancellation is requested
             await Task.Delay(Timeout.Infinite, stoppingToken).ContinueWith(_ => { }, stoppingToken);
         }
 

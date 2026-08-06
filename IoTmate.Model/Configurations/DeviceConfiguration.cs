@@ -44,6 +44,16 @@ namespace IoTmate.Model.Configurations
 
             builder.Property(x => x.IsOnline)
                 .HasDefaultValue(false);
+
+            // Latest reading snapshot (jsonb)
+            builder.Property(x => x.LastReading)
+                .HasColumnType("jsonb");
+
+            // Room assignment (nullable - a device may be unassigned)
+            builder.HasOne(x => x.Room)
+                .WithMany(x => x.Devices)
+                .HasForeignKey(x => x.RoomId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

@@ -4,9 +4,10 @@ services:
     container_name: "iotmate-mqtt"
     restart: unless-stopped
     ports:
-      - "1883:1883"
+      - "8883:8883"
     volumes:
       - ./mosquitto/mosquitto.conf:/etc/mosquitto/mosquitto.conf:ro
+      - ./mosquitto/letsencrypt:/etc/letsencrypt:ro
       - mosquitto_data:/mosquitto/data
       - mosquitto_log:/mosquitto/log
 

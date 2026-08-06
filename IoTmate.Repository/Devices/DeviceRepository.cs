@@ -31,7 +31,9 @@ public class DeviceRepository(ApplicationDbContext dbContext) : BaseRepository(d
             return null;
 
         var normalizedDeviceId = deviceId.Trim().ToUpperInvariant();
-        return await DbContext.Devices.FirstOrDefaultAsync(d => d.DeviceId == normalizedDeviceId);
+        return await DbContext.Devices
+            .Include(d => d.RelayState)
+            .FirstOrDefaultAsync(d => d.DeviceId == normalizedDeviceId);
     }
 
     public async Task<bool> ValidateCredentialsAsync(string deviceId, string secretToken)

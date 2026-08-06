@@ -58,7 +58,8 @@ namespace IoTmate.IntegrationTests
                     {"MqttSettings:Host", MqttHost},
                     {"MqttSettings:Port", MqttPort.ToString()},
                     {"MqttSettings:Username", "backend_app"},
-                    {"MqttSettings:Password", "BackendPassword"}
+                    {"MqttSettings:Password", "BackendPassword"},
+                    {"MqttSettings:UseTls", "false"}
                 });
             });
         }

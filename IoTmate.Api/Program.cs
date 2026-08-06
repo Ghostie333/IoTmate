@@ -1,9 +1,12 @@
+using IoTmate.Api.Exceptions;
 using IoTmate.Model;
 using IoTmate.Model.Entities;
 using IoTmate.Repository.Devices;
+using IoTmate.Repository.Rooms;
 using IoTmate.Services.Auth;
 using IoTmate.Services.Devices;
 using IoTmate.Services.Mqtt;
+using IoTmate.Services.Rooms;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -49,7 +52,8 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<MqttBrokerListener
 
 builder.Services.AddSingleton<IDeviceStateService, DeviceStateService>();
 builder.Services.AddScoped<IMqttMessageRouterService, MqttMessageRouterService>();
-
+builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+builder.Services.AddScoped<IRoomService, RoomService>();
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -66,9 +70,15 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Global exception handling (maps domain exceptions to HTTP status codes)
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
+app.UseExceptionHandler();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

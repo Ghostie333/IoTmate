@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using IoTmate.Dto.Auth;
+﻿using IoTmate.Dto.Auth;
 using IoTmate.Services.Auth;
 using Microsoft.AspNetCore.Mvc;
 
