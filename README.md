@@ -1,3 +1,3 @@
 # IoTmate
-Aplikacja webowa do zarzadzania i auromatyzacji urządzeń ESP32
+## Aplikacja webowa do zarzadzania i automatyzacji urządzeń ESP32
 Praca inzynierska
