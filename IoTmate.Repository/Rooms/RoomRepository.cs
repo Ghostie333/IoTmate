@@ -164,8 +164,10 @@ namespace IoTmate.Repository.Rooms
             if (roomId == Guid.Empty || string.IsNullOrEmpty(deviceId))
                 return false;
 
+            var normalizedDeviceId = deviceId.Trim().ToUpperInvariant();
+
             var updated = await DbContext.Devices
-                .Where(d => d.DeviceId == deviceId && d.RoomId == null)
+                .Where(d => d.DeviceId == normalizedDeviceId && d.RoomId == null)
                 .ExecuteUpdateAsync(s => s.SetProperty(d => d.RoomId, roomId));
 
             return updated > 0;

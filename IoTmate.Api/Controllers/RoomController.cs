@@ -75,13 +75,12 @@ namespace IoTmate.Api.Controllers
         public async Task<IActionResult> AddDeviceToRoom([FromRoute] Guid roomId, [FromBody] string deviceId)
         {
             var currentUser = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            bool isSuccess = await _roomService.AddDeviceToRoom(roomId, currentUser!, deviceId);
-            if(!isSuccess) return BadRequest();
+            await _roomService.AddDeviceToRoom(roomId, currentUser!, deviceId);
             return Ok();
         }
 
-        [HttpDelete("{roomId}/devices/{deviceId}")]
-        public async Task<IActionResult> DeleteDeviceFromRoom([FromRoute] Guid roomId, [FromRoute] string deviceId)
+        [HttpDelete("{roomId}/devices")]
+        public async Task<IActionResult> DeleteDeviceFromRoom([FromRoute] Guid roomId, [FromBody] string deviceId)
         {
             var currentUser = User.FindFirstValue(ClaimTypes.NameIdentifier);
             bool isSuccess = await _roomService.DeleteDeviceFromRoom(roomId, currentUser!, deviceId);

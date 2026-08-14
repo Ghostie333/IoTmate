@@ -4,15 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace IoTmate.Api.Exceptions
 {
-    /// <summary>Maps domain exceptions to HTTP status codes and returns a consistent ProblemDetails body.</summary>
-    public class GlobalExceptionHandler : IExceptionHandler
+    // Maps domain exceptions to HTTP status codes and returns a consistent ProblemDetails body
+    public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
     {
-        private readonly ILogger<GlobalExceptionHandler> _logger;
-
-        public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
-        {
-            _logger = logger;
-        }
+        private readonly ILogger<GlobalExceptionHandler> _logger = logger;
 
         public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
         {

@@ -24,7 +24,7 @@ namespace IoTmate.Services.Rooms
 
         // Devices
         Task<List<DeviceDto>> GetRoomDevices(Guid roomId, string currentUserId);
-        Task<bool> AddDeviceToRoom(Guid roomId, string currentUserId, string deviceId);
+        Task AddDeviceToRoom(Guid roomId, string currentUserId, string deviceId);
         Task<bool> DeleteDeviceFromRoom(Guid roomId, string currentUserId, string deviceId);
     }
 }

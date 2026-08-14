@@ -4,13 +4,15 @@ using IoTmate.Dto.Device;
 using IoTmate.Dto.Room;
 using IoTmate.Model.Entities;
 using IoTmate.Model.Enums;
+using IoTmate.Repository.Devices;
 using IoTmate.Repository.Rooms;
 
 namespace IoTmate.Services.Rooms
 {
-    public class RoomService(IRoomRepository roomRepository, IMapper mapper) : IRoomService
+    public class RoomService(IRoomRepository roomRepository, IDeviceRepository deviceRepository, IMapper mapper) : IRoomService
     {
         private readonly IRoomRepository _roomRepository = roomRepository;
+        private readonly IDeviceRepository _deviceRepository = deviceRepository;
         private readonly IMapper _mapper = mapper;
 
         // User
@@ -145,8 +147,7 @@ namespace IoTmate.Services.Rooms
 
             return _mapper.Map<List<DeviceDto>>(roomDevices);
         }
-
-        public async Task<bool> AddDeviceToRoom(Guid roomId, string currentUserId, string deviceId)
+        public async Task AddDeviceToRoom(Guid roomId, string currentUserId, string deviceId)
         {
             EnsureValidRoomId(roomId);
             EnsureAuthenticated(currentUserId);
@@ -155,9 +156,16 @@ namespace IoTmate.Services.Rooms
             await EnsureRoomAccessAsync(roomId, currentUserId);
             await EnsureRoomOwnerAsync(roomId, currentUserId);
 
-            return await _roomRepository.AddDeviceToRoomAsync(roomId, deviceId);
-        }
+            var device = await _deviceRepository.GetByDeviceIdAsync(deviceId);
+            if (device == null)
+                throw new NotFoundException("device.notFound");
 
+            if (device.RoomId != null)
+                throw new ConflictException("device.alreadyAssigned");
+
+            if (!await _roomRepository.AddDeviceToRoomAsync(roomId, deviceId))
+                throw new ConflictException("device.alreadyAssigned");
+        }
         public async Task<bool> DeleteDeviceFromRoom(Guid roomId, string currentUserId, string deviceId)
         {
             EnsureValidRoomId(roomId);
@@ -183,18 +191,15 @@ namespace IoTmate.Services.Rooms
             if (role != RoomRole.Owner)
                 throw new ForbiddenException("Only the room owner can perform this action.");
         }
-
         private static void EnsureAuthenticated(string userId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(userId, nameof(userId));
         }
-
         private static void EnsureValidRoomId(Guid roomId)
         {
             if (roomId == Guid.Empty)
                 throw new ArgumentException("Room id cannot be empty.", nameof(roomId));
         }
-
         private static void EnsureValidDeviceId(string deviceId)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(deviceId, nameof(deviceId));
