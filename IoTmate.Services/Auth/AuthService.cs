@@ -68,5 +68,20 @@ namespace IoTmate.Services.Auth
             await _signInManager.SignOutAsync();
         }
 
+        public async Task<CurrentUserDto?> GetCurrentUserAsync(string? userId)
+        {
+            if (string.IsNullOrEmpty(userId)) return null;
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return null;
+
+            return new CurrentUserDto
+            {
+                UserId = user.Id,
+                UserName = user.UserName ?? "",
+                Email = user.Email ?? ""
+            };
+        }
+
     }
 }

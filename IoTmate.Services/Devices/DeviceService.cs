@@ -1,9 +1,11 @@
-﻿using IoTmate.Common.Security;
+﻿using IoTmate.Common.Exceptions;
+using IoTmate.Common.Security;
 using IoTmate.Dto.Device;
 using IoTmate.Model.Entities;
 using IoTmate.Model.Enums;
 using IoTmate.Repository.Devices;
 using Microsoft.AspNetCore.Identity;
+using System.Collections.Specialized;
 
 namespace IoTmate.Services.Devices;
 
@@ -92,6 +94,16 @@ public class DeviceService(IDeviceRepository deviceRepository) : IDeviceService
 
         await deviceRepository.SaveDeviceAsync(newDevice);
         return new DeviceRegistrationResult { Device = newDevice, RawSecretToken = rawSecretToken };
+    }
+
+    public async Task UpdateDeviceAsync(string deviceId, string newName)
+    {
+        var normalizedMac = deviceId.Trim().ToUpperInvariant();
+        var device = await deviceRepository.GetByDeviceIdAsync(normalizedMac)
+            ?? throw new NotFoundException("device.notFound");
+
+        device.Name = newName;
+        await deviceRepository.SaveDeviceAsync(device);
     }
 
     private static Dictionary<string, bool> CreateInitialOutlets(int count)

@@ -7,5 +7,6 @@ namespace IoTmate.Services.Auth
         Task<AuthResultDto> RegisterUserAsync(UserRegistrationInputDto input);
         Task<AuthResultDto> LoginUserAsync(UserLoginInputDto input);
         Task LogoutUserAsync();
+        Task<CurrentUserDto?> GetCurrentUserAsync(string? userId);
     }
 }

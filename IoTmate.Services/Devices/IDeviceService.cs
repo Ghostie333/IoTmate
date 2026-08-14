@@ -11,5 +11,6 @@ namespace IoTmate.Services.Devices
         Task<bool> ValidateCredentialsAsync(string deviceId, string secretToken);
         bool IsTopicAllowedForDevice(string deviceId, string topic);
         Task<DeviceRegistrationResult?> RegisterDeviceAsync(RegisterDeviceRequestDto request);
+        Task UpdateDeviceAsync(string deviceId, string newName);
     }
 }

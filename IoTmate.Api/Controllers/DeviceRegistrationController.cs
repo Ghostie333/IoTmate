@@ -26,4 +26,10 @@ public class DeviceRegistrationController(IDeviceService deviceService) : Contro
             SecretToken = result.RawSecretToken
         });
     }
+    [HttpPatch("{deviceId}")]
+    public async Task<IActionResult> UpdateDevice([FromRoute] string deviceId, [FromBody] UpdateDeviceRequestDto request)
+    {
+        await _deviceService.UpdateDeviceAsync(deviceId, request.NewName);
+        return Ok();
+    }
 }
