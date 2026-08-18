@@ -2,7 +2,6 @@
 using DotNet.Testcontainers.Containers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
 using Testcontainers.PostgreSql;
 using Xunit;
 
@@ -48,20 +47,12 @@ namespace IoTmate.IntegrationTests
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
-            builder.ConfigureAppConfiguration((context, config) =>
-            {
-                // Używamy AddInMemoryCollection zamiast Environment.SetEnvironmentVariable!
-                // Dzięki temu nadpisujemy IConfiguration dynamicznymi portami po starcie kontenera.
-                config.AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    {"ConnectionStrings:DefaultConnection", _dbContainer.GetConnectionString()},
-                    {"MqttSettings:Host", MqttHost},
-                    {"MqttSettings:Port", MqttPort.ToString()},
-                    {"MqttSettings:Username", "backend_app"},
-                    {"MqttSettings:Password", "BackendPassword"},
-                    {"MqttSettings:UseTls", "false"}
-                });
-            });
+            builder.UseSetting("ConnectionStrings:DefaultConnection", _dbContainer.GetConnectionString());
+            builder.UseSetting("MqttSettings:Host", MqttHost);
+            builder.UseSetting("MqttSettings:Port", MqttPort.ToString());
+            builder.UseSetting("MqttSettings:Username", "backend_app");
+            builder.UseSetting("MqttSettings:Password", "BackendPassword");
+            builder.UseSetting("MqttSettings:UseTls", "false");
         }
 
         public new async Task DisposeAsync()

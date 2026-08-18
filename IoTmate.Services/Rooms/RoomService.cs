@@ -107,14 +107,16 @@ namespace IoTmate.Services.Rooms
             return await _roomRepository.DeleteUserFromRoomAsync(roomId, userId);
         }
 
-        public async Task<RoomRole?> GetUserRole(Guid roomId, string currentUserId)
+public async Task<RoomRole?> GetUserRole(Guid roomId, string currentUserId)
         {
             EnsureValidRoomId(roomId);
             EnsureAuthenticated(currentUserId);
 
-            await EnsureRoomAccessAsync(roomId, currentUserId);
+            var role = await _roomRepository.GetUserRoleAsync(roomId, currentUserId);
+            if (role == null)
+                throw new ForbiddenException("You don't have access to this room.");
 
-            return await _roomRepository.GetUserRoleAsync(roomId, currentUserId);
+            return role;
         }
 
         public async Task<List<RoomMemberDto>> GetRoomMembers(Guid roomId, string currentUserId)

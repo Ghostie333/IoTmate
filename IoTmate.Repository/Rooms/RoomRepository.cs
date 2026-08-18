@@ -13,9 +13,7 @@ namespace IoTmate.Repository.Rooms
             if (roomId == Guid.Empty)
                 return null;
 
-            var room = await DbContext.Rooms.FirstOrDefaultAsync(r => r.Id == roomId);
-
-            return room;
+            return await DbContext.Rooms.FirstOrDefaultAsync(r => r.Id == roomId);
         }
         public async Task<List<Room>> GetUserRoomsAsync(string userId)
         {
@@ -122,15 +120,11 @@ namespace IoTmate.Repository.Rooms
             if (roomId == Guid.Empty || string.IsNullOrEmpty(userId))
                 return null;
 
-            var room = await DbContext.Rooms.Include(r => r.Members).FirstOrDefaultAsync(r => r.Id == roomId);
-            if (room == null)
-                return null;
-
-            var member = room.Members.FirstOrDefault(m => m.UserId == userId);
-            if (member == null)
-                return null;
-
-            return member.Role;
+            return await DbContext.RoomMembers
+                .AsNoTracking()
+                .Where(m => m.RoomId == roomId && m.UserId == userId)
+                .Select(m => (RoomRole?)m.Role)
+                .FirstOrDefaultAsync();
         }
         public async Task<List<RoomMember>> GetRoomMembersAsync(Guid roomId)
         {

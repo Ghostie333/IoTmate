@@ -5,6 +5,7 @@ using IoTmate.Repository.Devices;
 using IoTmate.Repository.Rooms;
 using IoTmate.Services.Auth;
 using IoTmate.Services.Devices;
+using IoTmate.Services.Hubs;
 using IoTmate.Services.Mqtt;
 using IoTmate.Services.Rooms;
 using Microsoft.AspNetCore.Identity;
@@ -45,15 +46,20 @@ builder.Services.AddScoped<IDeviceRepository, DeviceRepository>();
 builder.Services.AddScoped<IDeviceService, DeviceService>();
 
 // MQTT Services registration
-// 1. Rejestrujemy MqttBrokerListenerService jako Singleton w DI, aby DeviceStateService mógł go wstrzyknąć
 builder.Services.AddSingleton<MqttBrokerListenerService>();
-// 2. Wskazujemy HostedService na tę samą instancję z DI
 builder.Services.AddHostedService(sp => sp.GetRequiredService<MqttBrokerListenerService>());
-
-builder.Services.AddSingleton<IDeviceStateService, DeviceStateService>();
 builder.Services.AddScoped<IMqttMessageRouterService, MqttMessageRouterService>();
+
+// Device services
+builder.Services.AddSingleton<IDeviceStateService, DeviceStateService>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
+
+// Room services
 builder.Services.AddScoped<IRoomService, RoomService>();
+
+// SignalR hubs
+builder.Services.AddSignalR();
+
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -89,6 +95,8 @@ app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHub<DeviceHub>("/hubs/devices");
 app.MapControllers();
 
 // Auto migration on startup

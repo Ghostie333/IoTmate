@@ -14,15 +14,8 @@ public class DeviceRepository(ApplicationDbContext dbContext) : BaseRepository(d
             DbContext.Devices.Update(device);
         }
 
-        try
-        {
-            await DbContext.SaveChangesAsync();
-            return true;
-        }
-        catch (Exception)
-        {
-            return false;
-        }
+        await DbContext.SaveChangesAsync();
+        return true;
     }
 
     public async Task<Device?> GetByDeviceIdAsync(string deviceId)

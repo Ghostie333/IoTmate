@@ -49,7 +49,7 @@ namespace IoTmate.Services.Auth
         {
             var user = await _userManager.FindByEmailAsync(input.Email);
 
-            if(user == null || !await _userManager.CheckPasswordAsync(user, input.Password))
+            if (user == null || !await _userManager.CheckPasswordAsync(user, input.Password))
                 return new AuthResultDto { Succeeded = false, Errors = ["Wrong email or password"] };
 
             await SignInUserAsync(user, input.IsPersistent);

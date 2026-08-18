@@ -5,7 +5,6 @@ using IoTmate.Model.Entities;
 using IoTmate.Model.Enums;
 using IoTmate.Repository.Devices;
 using Microsoft.AspNetCore.Identity;
-using System.Collections.Specialized;
 
 namespace IoTmate.Services.Devices;
 

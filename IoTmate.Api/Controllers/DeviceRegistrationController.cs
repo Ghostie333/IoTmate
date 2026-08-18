@@ -1,5 +1,6 @@
 ﻿using IoTmate.Dto.Device;
 using IoTmate.Services.Devices;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IoTmate.Api.Controllers;
@@ -26,6 +27,8 @@ public class DeviceRegistrationController(IDeviceService deviceService) : Contro
             SecretToken = result.RawSecretToken
         });
     }
+
+    [Authorize]
     [HttpPatch("{deviceId}")]
     public async Task<IActionResult> UpdateDevice([FromRoute] string deviceId, [FromBody] UpdateDeviceRequestDto request)
     {

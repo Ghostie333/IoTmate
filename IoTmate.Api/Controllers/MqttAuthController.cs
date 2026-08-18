@@ -45,13 +45,13 @@ namespace IoTmate.Api.Controllers
         // Helper for checking if username is IoTmate-backend user username
         private bool IsBackendServiceUsername(string username)
         {
-            var exceptedUsername = _configuration["MqttSettings:Username"];
-            if (string.IsNullOrEmpty(exceptedUsername) || string.IsNullOrEmpty(username))
+            var expectedUsername = _configuration["MqttSettings:Username"];
+            if (string.IsNullOrEmpty(expectedUsername) || string.IsNullOrEmpty(username))
                 return false;
 
             return CryptographicOperations.FixedTimeEquals(
                 Encoding.UTF8.GetBytes(username),
-                Encoding.UTF8.GetBytes(exceptedUsername)
+                Encoding.UTF8.GetBytes(expectedUsername)
             );
         }
 
@@ -59,13 +59,13 @@ namespace IoTmate.Api.Controllers
         // Helper for checking if password is IoTmate-backend user password
         private bool IsBackendServicePassword(string password)
         {
-            var exceptedPassword = _configuration["MqttSettings:Password"];
-            if (string.IsNullOrEmpty(exceptedPassword) || string.IsNullOrEmpty(password))
+            var expectedPassword = _configuration["MqttSettings:Password"];
+            if (string.IsNullOrEmpty(expectedPassword) || string.IsNullOrEmpty(password))
                 return false;
 
             return CryptographicOperations.FixedTimeEquals(
                 Encoding.UTF8.GetBytes(password),
-                Encoding.UTF8.GetBytes(exceptedPassword)
+                Encoding.UTF8.GetBytes(expectedPassword)
             );
         }
 
