@@ -16,35 +16,35 @@ namespace IoTmate.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetUserRooms()
         {
-            var roomDto = await _roomService.GetUserRooms(CurrentUserId);
+            var roomDto = await _roomService.GetUserRooms(CurrentUserId, HttpContext.RequestAborted);
             return Ok(roomDto);
         }
 
         [HttpGet("{roomId}")]
         public async Task<IActionResult> GetRoomById([FromRoute] Guid roomId)
         {
-            var roomDto = await _roomService.GetRoomById(roomId, CurrentUserId);
+            var roomDto = await _roomService.GetRoomById(roomId, CurrentUserId, HttpContext.RequestAborted);
             return Ok(roomDto);
         }
 
         [HttpPost("new")]
         public async Task<IActionResult> CreateRoom([FromBody] CreateRoomInputDto input)
         {
-            var newRoomDto = await _roomService.CreateRoom(input, CurrentUserId);
+            var newRoomDto = await _roomService.CreateRoom(input, CurrentUserId, HttpContext.RequestAborted);
             return Ok(newRoomDto);
         }
 
         [HttpPut("{roomId}")]
         public async Task<IActionResult> UpdateRoom([FromBody] CreateRoomInputDto input, [FromRoute] Guid roomId)
         {
-            await _roomService.UpdateRoom(input, roomId, CurrentUserId);
+            await _roomService.UpdateRoom(input, roomId, CurrentUserId, HttpContext.RequestAborted);
             return Ok();
         }
 
         [HttpDelete("{roomId}")]
         public async Task<IActionResult> DeleteRoom([FromRoute] Guid roomId)
         {
-            bool isSuccess = await _roomService.DeleteRoom(roomId, CurrentUserId);
+            bool isSuccess = await _roomService.DeleteRoom(roomId, CurrentUserId, HttpContext.RequestAborted);
             if (!isSuccess) return NotFound();
             return Ok();
         }
@@ -52,7 +52,7 @@ namespace IoTmate.Api.Controllers
         [HttpGet("{roomId}/members")]
         public async Task<IActionResult> GetRoomMembers([FromRoute] Guid roomId)
         {
-            var roomMembers = await _roomService.GetRoomMembers(roomId, CurrentUserId);
+            var roomMembers = await _roomService.GetRoomMembers(roomId, CurrentUserId, HttpContext.RequestAborted);
             return Ok(roomMembers);
 
         }
@@ -60,21 +60,21 @@ namespace IoTmate.Api.Controllers
         [HttpGet("{roomId}/devices")]
         public async Task<IActionResult> GetRoomDevices([FromRoute] Guid roomId)
         {
-            var roomDevices = await _roomService.GetRoomDevices(roomId, CurrentUserId);
+            var roomDevices = await _roomService.GetRoomDevices(roomId, CurrentUserId, HttpContext.RequestAborted);
             return Ok(roomDevices);
         }
 
         [HttpPost("{roomId}/devices")]
         public async Task<IActionResult> AddDeviceToRoom([FromRoute] Guid roomId, [FromBody] string deviceId)
         {
-            await _roomService.AddDeviceToRoom(roomId, CurrentUserId, deviceId);
+            await _roomService.AddDeviceToRoom(roomId, CurrentUserId, deviceId, HttpContext.RequestAborted);
             return Ok();
         }
 
         [HttpDelete("{roomId}/devices")]
         public async Task<IActionResult> DeleteDeviceFromRoom([FromRoute] Guid roomId, [FromBody] string deviceId)
         {
-            bool isSuccess = await _roomService.DeleteDeviceFromRoom(roomId, CurrentUserId, deviceId);
+            bool isSuccess = await _roomService.DeleteDeviceFromRoom(roomId, CurrentUserId, deviceId, HttpContext.RequestAborted);
             if (!isSuccess) return BadRequest();
             return Ok();
         }

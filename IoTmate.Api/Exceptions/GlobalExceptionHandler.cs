@@ -39,6 +39,7 @@ namespace IoTmate.Api.Exceptions
 
         private static string GetTitle(int statusCode) => statusCode switch
         {
+            StatusCodes.Status400BadRequest => "Bad Request",
             StatusCodes.Status404NotFound => "Not Found",
             StatusCodes.Status403Forbidden => "Forbidden",
             StatusCodes.Status409Conflict => "Conflict",

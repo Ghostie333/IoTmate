@@ -9,7 +9,7 @@ namespace IoTmate.Services.Auth
         private readonly UserManager<ApplicationUser> _userManager = userManager;
         private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
 
-        public async Task<AuthResultDto> RegisterUserAsync(UserRegistrationInputDto input)
+        public async Task<AuthResultDto> RegisterUserAsync(UserRegistrationInputDto input, CancellationToken ct)
         {
             // Check if user with this email doesnt exists
             var existingUser = await _userManager.FindByEmailAsync(input.Email);
@@ -40,35 +40,35 @@ namespace IoTmate.Services.Auth
             }
 
             // Auto login user
-            await SignInUserAsync(user, true);
+            await SignInUserAsync(user, true, ct);
 
             return new AuthResultDto { Succeeded = true };
         }
 
-        public async Task<AuthResultDto> LoginUserAsync(UserLoginInputDto input)
+        public async Task<AuthResultDto> LoginUserAsync(UserLoginInputDto input, CancellationToken ct)
         {
             var user = await _userManager.FindByEmailAsync(input.Email);
 
             if (user == null || !await _userManager.CheckPasswordAsync(user, input.Password))
                 return new AuthResultDto { Succeeded = false, Errors = ["Wrong email or password"] };
 
-            await SignInUserAsync(user, input.IsPersistent);
+            await SignInUserAsync(user, input.IsPersistent, ct);
 
             return new AuthResultDto { Succeeded = true };
         }
 
-        private async Task SignInUserAsync(ApplicationUser user, bool isPersistent)
+        private async Task SignInUserAsync(ApplicationUser user, bool isPersistent, CancellationToken ct)
         {
             // isPersistent = true - cookie remains after closing the browser
             await _signInManager.SignInAsync(user, isPersistent);
         }
 
-        public async Task LogoutUserAsync()
+        public async Task LogoutUserAsync(CancellationToken ct)
         {
             await _signInManager.SignOutAsync();
         }
 
-        public async Task<CurrentUserDto?> GetCurrentUserAsync(string? userId)
+        public async Task<CurrentUserDto?> GetCurrentUserAsync(string? userId, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(userId)) return null;
 

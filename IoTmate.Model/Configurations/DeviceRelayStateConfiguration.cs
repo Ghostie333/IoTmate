@@ -15,9 +15,6 @@ namespace IoTmate.Model.Configurations
                 .WithOne(x => x.RelayState)
                 .HasForeignKey<DeviceRelayState>(x => x.DeviceId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-            builder.Property(x => x.Outlets)
-                .HasColumnType("jsonb");
         }
     }
 }

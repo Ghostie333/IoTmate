@@ -6,24 +6,23 @@ namespace IoTmate.Repository.Rooms
     public interface IRoomRepository
     {
         // User rooms
-        Task<Room?> GetRoomByIdAsync(Guid roomId);
-        Task<List<Room>> GetUserRoomsAsync(string userId);
+        Task<Room?> GetRoomByIdAsync(Guid roomId, CancellationToken ct);
+        Task<List<Room>> GetUserRoomsAsync(string userId, CancellationToken ct);
 
         // Create, update, delete room
-        Task<Room> CreateRoomAsync(Room room);
-        Task<Room> CreateRoomWithOwnerAsync(Room room, string ownerUserId);
-        Task UpdateRoomAsync(Room room);
-        Task<bool> DeleteRoomAsync(Guid roomId);
+        Task<Room> CreateRoomWithOwnerAsync(Room room, string ownerUserId, CancellationToken ct);
+        Task UpdateRoomAsync(Room room, CancellationToken ct);
+        Task<bool> DeleteRoomAsync(Guid roomId, CancellationToken ct);
 
         // Room users
-        Task<bool> AddUserToRoomAsync(Guid roomId, string userId, RoomRole roomRole);
-        Task<bool> DeleteUserFromRoomAsync(Guid roomId, string userId);
-        Task<RoomRole?> GetUserRoleAsync(Guid roomId, string userId);
-        Task<List<RoomMember>> GetRoomMembersAsync(Guid roomId);
+        Task<bool> AddUserToRoomAsync(Guid roomId, string userId, RoomRole roomRole, CancellationToken ct);
+        Task<bool> DeleteUserFromRoomAsync(Guid roomId, string userId, CancellationToken ct);
+        Task<RoomRole?> GetUserRoleAsync(Guid roomId, string userId, CancellationToken ct);
+        Task<List<RoomMember>> GetRoomMembersAsync(Guid roomId, CancellationToken ct);
 
         // Devices
-        Task<List<Device>> GetRoomDevicesAsync(Guid roomId);
-        Task<bool> AddDeviceToRoomAsync(Guid roomId, string deviceId);
-        Task<bool> DeleteDeviceFromRoomAsync(Guid roomId, string deviceId);
+        Task<List<Device>> GetRoomDevicesAsync(Guid roomId, CancellationToken ct);
+        Task<bool> AddDeviceToRoomAsync(Guid roomId, string deviceId, CancellationToken ct);
+        Task<bool> DeleteDeviceFromRoomAsync(Guid roomId, string deviceId, CancellationToken ct);
     }
 }

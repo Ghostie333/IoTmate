@@ -14,7 +14,7 @@ public class DeviceRegistrationController(IDeviceService deviceService) : Contro
     [HttpPost("register")]
     public async Task<IActionResult> RegisterDevice([FromBody] RegisterDeviceRequestDto request)
     {
-        var result = await _deviceService.RegisterDeviceAsync(request);
+        var result = await _deviceService.RegisterDeviceAsync(request, HttpContext.RequestAborted);
 
         if (result == null)
         {
@@ -32,7 +32,7 @@ public class DeviceRegistrationController(IDeviceService deviceService) : Contro
     [HttpPatch("{deviceId}")]
     public async Task<IActionResult> UpdateDevice([FromRoute] string deviceId, [FromBody] UpdateDeviceRequestDto request)
     {
-        await _deviceService.UpdateDeviceAsync(deviceId, request.NewName);
+        await _deviceService.UpdateDeviceAsync(deviceId, request.NewName, HttpContext.RequestAborted);
         return Ok();
     }
 }

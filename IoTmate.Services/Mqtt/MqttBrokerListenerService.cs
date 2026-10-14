@@ -84,7 +84,7 @@ namespace IoTmate.Services.Mqtt
 
             try
             {
-                // Create a scope because the handling logic uses scoped services (DbContext, etc.)
+                // Create a scope because the handling logic uses scoped services
                 using var scope = _scopeFactory.CreateScope();
                 var router = scope.ServiceProvider.GetRequiredService<IMqttMessageRouterService>();
 

@@ -1,13 +1,17 @@
 using IoTmate.Api.Exceptions;
 using IoTmate.Model;
 using IoTmate.Model.Entities;
+using IoTmate.Model.Enums;
 using IoTmate.Repository.Devices;
 using IoTmate.Repository.Rooms;
+using IoTmate.Repository.Rules;
 using IoTmate.Services.Auth;
 using IoTmate.Services.Devices;
+using IoTmate.Services.Devices.StateHandlers;
 using IoTmate.Services.Hubs;
 using IoTmate.Services.Mqtt;
 using IoTmate.Services.Rooms;
+using IoTmate.Services.Rules;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -54,11 +58,21 @@ builder.Services.AddScoped<IMqttMessageRouterService, MqttMessageRouterService>(
 builder.Services.AddSingleton<IDeviceStateService, DeviceStateService>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 
+// Device state handlers
+builder.Services.AddKeyedScoped<IDeviceStateHandler, PowerStripStateHandler>(DeviceType.PowerStrip);
+builder.Services.AddKeyedScoped<IDeviceStateHandler, SensorStateHandler>(DeviceType.Sensor);
+
 // Room services
 builder.Services.AddScoped<IRoomService, RoomService>();
 
 // SignalR hubs
 builder.Services.AddSignalR();
+
+// Rules
+builder.Services.AddScoped<IRuleRepository, RuleRepository>();
+builder.Services.AddScoped<IRuleService, RuleService>();
+builder.Services.AddScoped<IRuleEngineService, RuleEngineService>();
+builder.Services.AddHostedService<TimeRuleScheduler>();
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();

@@ -8,9 +8,9 @@ namespace IoTmate.Services.Devices
 {
     public interface IDeviceService
     {
-        Task<bool> ValidateCredentialsAsync(string deviceId, string secretToken);
+        Task<bool> ValidateCredentialsAsync(string deviceId, string secretToken, CancellationToken ct);
         bool IsTopicAllowedForDevice(string deviceId, string topic);
-        Task<DeviceRegistrationResult?> RegisterDeviceAsync(RegisterDeviceRequestDto request);
-        Task UpdateDeviceAsync(string deviceId, string newName);
+        Task<DeviceRegistrationResult?> RegisterDeviceAsync(RegisterDeviceRequestDto request, CancellationToken ct);
+        Task UpdateDeviceAsync(string deviceId, string newName, CancellationToken ct);
     }
 }

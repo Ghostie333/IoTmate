@@ -15,7 +15,7 @@ namespace IoTmate.Api.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserRegistrationInputDto input)
         {
-            var result = await _authService.RegisterUserAsync(input);
+            var result = await _authService.RegisterUserAsync(input, HttpContext.RequestAborted);
             if (!result.Succeeded)
                 return BadRequest(result);
 
@@ -25,7 +25,7 @@ namespace IoTmate.Api.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserLoginInputDto input)
         {
-            var result = await _authService.LoginUserAsync(input);
+            var result = await _authService.LoginUserAsync(input, HttpContext.RequestAborted);
             if (!result.Succeeded)
                 return Unauthorized(result);
 
@@ -37,7 +37,7 @@ namespace IoTmate.Api.Controllers
         public async Task<IActionResult> Me()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var user = await _authService.GetCurrentUserAsync(userId);
+            var user = await _authService.GetCurrentUserAsync(userId, HttpContext.RequestAborted);
 
             if (user == null)
                 return Unauthorized();
@@ -48,7 +48,7 @@ namespace IoTmate.Api.Controllers
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
-            await _authService.LogoutUserAsync();
+            await _authService.LogoutUserAsync(HttpContext.RequestAborted);
             return Ok();
         }
 

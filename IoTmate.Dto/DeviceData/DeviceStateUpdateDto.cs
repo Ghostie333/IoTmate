@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace IoTmate.Dto.DeviceData
+﻿namespace IoTmate.Dto.DeviceData
 {
     public record DeviceStateUpdateDto
     {
@@ -8,6 +6,6 @@ namespace IoTmate.Dto.DeviceData
         public required bool IsOnline { get; set; }
         public required DateTime LastSeenAt { get; set; }
 
-        public Dictionary<string, bool> Outlets { get; set; } = [];
+        public bool[] OutletsState { get; set; } = [];
     }
 }

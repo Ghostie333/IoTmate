@@ -1,10 +1,12 @@
-﻿using IoTmate.Services.Hubs;
-using IoTmate.Dto.Device;
+﻿using IoTmate.Dto.Device;
 using IoTmate.Dto.DeviceData;
 using IoTmate.Model.Entities;
 using IoTmate.Model.Enums;
 using IoTmate.Repository.Devices;
+using IoTmate.Services.Devices.StateHandlers;
+using IoTmate.Services.Hubs;
 using IoTmate.Services.Mqtt;
+using IoTmate.Services.Rules;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -12,7 +14,7 @@ using System.Text.Json;
 
 namespace IoTmate.Services.Devices
 {
-public class DeviceStateService(
+    public class DeviceStateService(
         MqttBrokerListenerService mqttService,
         IServiceScopeFactory scopeFactory,
         ILogger<DeviceStateService> logger,
@@ -35,70 +37,16 @@ public class DeviceStateService(
 
             try
             {
-                // Create a scope for the scoped repository
                 using var scope = _scopeFactory.CreateScope();
                 var deviceRepository = scope.ServiceProvider.GetRequiredService<IDeviceRepository>();
 
-                var device = await deviceRepository.GetByDeviceIdAsync(deviceId);
+                var device = await deviceRepository.GetByDeviceIdAsync(deviceId, ct);
                 if (device == null)
                     return;
 
-                switch (device.DeviceType)
-                {
-                    case DeviceType.PowerStrip:
-                    {
-                        var outlets = JsonSerializer.Deserialize<Dictionary<string, bool>>(payload, JsonOptions);
-                        if (outlets == null || outlets.Count == 0)
-                            return;
-
-                        device.RelayState ??= new DeviceRelayState { DeviceId = device.Id };
-                        device.RelayState.Outlets = outlets;
-                        device.LastSeenAt = DateTime.UtcNow;
-                        bool success = await deviceRepository.SaveDeviceAsync(device);
-
-                        if (device.RoomId is not null && success)
-                            await _deviceHub.Clients.Group(device.RoomId.Value.ToString())
-                                .DeviceStateChanged(new DeviceStateUpdateDto
-                                {
-                                    DeviceId = device.DeviceId,
-                                    IsOnline = device.IsOnline,
-                                    LastSeenAt = device.LastSeenAt,
-                                    Outlets = outlets
-                                });
-                        break;
-                    }
-
-                    case DeviceType.Sensor:
-                    {
-                        var readings = JsonSerializer.Deserialize<Dictionary<string, float>>(payload, JsonOptions);
-                        if (readings == null || readings.Count == 0)
-                            return;
-
-                        device.LastReading = readings;
-                        device.SensorReadings.Add(new SensorReading
-                        {
-                            DeviceId = device.Id,
-                            Data = readings
-                        });
-                        device.LastSeenAt = DateTime.UtcNow;
-
-                        bool success = await deviceRepository.SaveDeviceAsync(device);
-
-                        if (device.RoomId is not null && success)
-                            await _deviceHub.Clients.Group(device.RoomId.Value.ToString())
-                                .SensorReadingReceived(new SensorReadingUpdateDto
-                                {
-                                    DeviceId = device.DeviceId,
-                                    Data = readings,
-                                    Timestamp = device.LastSeenAt
-                                });
-                        break;
-                    }
-                }
-            }
-            catch (JsonException ex)
-            {
-                _logger.LogError(ex, "[DeviceStateService] Error deserializing DeviceStatePayload");
+                // Get handler for correct device type
+                var handler = scope.ServiceProvider.GetRequiredKeyedService<IDeviceStateHandler>(device.DeviceType);
+                await handler.HandleStatePayloadAsync(device, payload, scope, ct);
             }
             catch (Exception ex)
             {
@@ -117,7 +65,7 @@ public class DeviceStateService(
                 using var scope = _scopeFactory.CreateScope();
                 var deviceRepository = scope.ServiceProvider.GetRequiredService<IDeviceRepository>();
 
-                var device = await deviceRepository.GetByDeviceIdAsync(deviceId);
+                var device = await deviceRepository.GetByDeviceIdAsync(deviceId, ct);
                 if (device == null)
                     return;
 
@@ -125,10 +73,10 @@ public class DeviceStateService(
                 if (statusData == null)
                     return;
 
-device.IsOnline = statusData.IsOnline;
+                device.IsOnline = statusData.IsOnline;
                 device.LastSeenAt = DateTime.UtcNow;
 
-                bool success = await deviceRepository.SaveDeviceAsync(device);
+                bool success = await deviceRepository.SaveDeviceAsync(device, ct);
 
                 // Notice clients about status update
                 if (device.RoomId is not null && success)

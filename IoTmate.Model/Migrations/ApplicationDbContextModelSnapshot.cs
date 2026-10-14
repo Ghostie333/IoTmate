@@ -146,9 +146,13 @@ namespace IoTmate.Model.Migrations
                     b.Property<Guid>("DeviceId")
                         .HasColumnType("uuid");
 
-                    b.Property<Dictionary<string, bool>>("Outlets")
+                    b.PrimitiveCollection<string[]>("OutletsNames")
                         .IsRequired()
-                        .HasColumnType("jsonb");
+                        .HasColumnType("text[]");
+
+                    b.PrimitiveCollection<bool[]>("OutletsState")
+                        .IsRequired()
+                        .HasColumnType("boolean[]");
 
                     b.HasKey("DeviceId");
 
@@ -210,6 +214,10 @@ namespace IoTmate.Model.Migrations
 
                     b.Property<int>("Action")
                         .HasColumnType("integer");
+
+                    b.PrimitiveCollection<bool[]>("DaysOfWeek")
+                        .IsRequired()
+                        .HasColumnType("boolean[]");
 
                     b.Property<bool>("IsEnabled")
                         .HasColumnType("boolean");

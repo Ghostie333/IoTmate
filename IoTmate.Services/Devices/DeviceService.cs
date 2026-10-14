@@ -12,9 +12,9 @@ public class DeviceService(IDeviceRepository deviceRepository) : IDeviceService
 {
     private readonly PasswordHasher<Device> _passwordHasher = new();
 
-    public async Task<bool> ValidateCredentialsAsync(string deviceId, string secretToken)
+    public async Task<bool> ValidateCredentialsAsync(string deviceId, string secretToken, CancellationToken ct)
     {
-        return await deviceRepository.ValidateCredentialsAsync(deviceId, secretToken);
+        return await deviceRepository.ValidateCredentialsAsync(deviceId, secretToken, ct);
     }
 
     public bool IsTopicAllowedForDevice(string deviceId, string topic)
@@ -32,7 +32,7 @@ public class DeviceService(IDeviceRepository deviceRepository) : IDeviceService
                topic.StartsWith($"{prefix}/", StringComparison.OrdinalIgnoreCase);
     }
 
-    public async Task<DeviceRegistrationResult?> RegisterDeviceAsync(RegisterDeviceRequestDto request)
+    public async Task<DeviceRegistrationResult?> RegisterDeviceAsync(RegisterDeviceRequestDto request, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -42,7 +42,7 @@ public class DeviceService(IDeviceRepository deviceRepository) : IDeviceService
         }
 
         var normalizedMac = request.DeviceId.Trim().ToUpperInvariant();
-        var existingDevice = await deviceRepository.GetByDeviceIdAsync(normalizedMac);
+        var existingDevice = await deviceRepository.GetByDeviceIdAsync(normalizedMac, ct);
 
         // If the device already exists
         if (existingDevice != null)
@@ -63,7 +63,7 @@ public class DeviceService(IDeviceRepository deviceRepository) : IDeviceService
             string newRawToken = CryptoUtils.GenerateSecureToken();
             existingDevice.SecretToken = CryptoUtils.HashTokenToHex(newRawToken);
 
-            await deviceRepository.SaveDeviceAsync(existingDevice);
+            await deviceRepository.SaveDeviceAsync(existingDevice, ct);
             return new DeviceRegistrationResult { Device = existingDevice, RawSecretToken = newRawToken };
         }
 
@@ -87,31 +87,37 @@ public class DeviceService(IDeviceRepository deviceRepository) : IDeviceService
         {
             newDevice.RelayState = new DeviceRelayState
             {
-                Outlets = CreateInitialOutlets(request.OutletsCount ?? 1)
+                OutletsState = CreateInitialOutletsState(request.OutletsCount ?? 1),
+                OutletsNames = CreateInitialOutletsNames(request.OutletsCount ?? 1)
             };
         }
 
-        await deviceRepository.SaveDeviceAsync(newDevice);
+        await deviceRepository.SaveDeviceAsync(newDevice, ct);
         return new DeviceRegistrationResult { Device = newDevice, RawSecretToken = rawSecretToken };
     }
 
-    public async Task UpdateDeviceAsync(string deviceId, string newName)
+    public async Task UpdateDeviceAsync(string deviceId, string newName, CancellationToken ct)
     {
         var normalizedMac = deviceId.Trim().ToUpperInvariant();
-        var device = await deviceRepository.GetByDeviceIdAsync(normalizedMac)
+        var device = await deviceRepository.GetByDeviceIdAsync(normalizedMac, ct)
             ?? throw new NotFoundException("device.notFound");
 
         device.Name = newName;
-        await deviceRepository.SaveDeviceAsync(device);
+        await deviceRepository.SaveDeviceAsync(device, ct);
     }
 
-    private static Dictionary<string, bool> CreateInitialOutlets(int count)
+    private static bool[] CreateInitialOutletsState(int count)
     {
-        var outlets = new Dictionary<string, bool>();
-        for (int i = 1; i <= count; i++)
+        return new bool[count];
+    }
+
+    private static string[] CreateInitialOutletsNames(int count)
+    {
+        var names = new string[count];
+        for (int i = 0; i < count; i++)
         {
-            outlets.Add($"outlet{i}", false);
+            names[i] = $"outlet{i + 1}";
         }
-        return outlets;
+        return names;
     }
 }

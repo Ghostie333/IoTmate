@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
-
-namespace IoTmate.Model.Entities
+﻿namespace IoTmate.Model.Entities
 {
     public class DeviceRelayState
     {
         public Guid DeviceId { get; set; }
         public Device Device { get; set; } = null!;
 
-        // Dictionary contain outlets state
-        public Dictionary<string, bool> Outlets { get; set; } = new();
+        public bool[] OutletsState { get; set; } = [];
+        public string[] OutletsNames { get; set; } = [];
     }
 }

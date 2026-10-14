@@ -8,24 +8,22 @@ namespace IoTmate.Model.Entities
         public Guid RoomId { get; set; }
         public Room Room { get; set; } = null!;
 
-        public RuleType RuleType { get; set; }
+        public RuleType RuleType { get; set; } // Reading = 1, Time = 2
         public bool IsEnabled { get; set; } = true;
         public string? Name { get; set; }
 
-        // Target (shared by every rule type)
-        // Device whose outlet is switched when the rule fires
+        // Target for every RuleType
+        // Device whose outlet is switched when the rule is true
         public Guid? TargetDeviceId { get; set; }
         public Device? TargetDevice { get; set; }
-        // 1-based outlet number on the target power strip
-        public int TargetOutletNumber { get; set; }
-        public RuleAction Action { get; set; }
+        public int TargetOutletNumber { get; set; } // outlet number on the target power strip
+        public RuleAction Action { get; set; } // TurnOn = 1, TurnOff = 2
 
         // Reading trigger (RuleType == Reading)
         public Guid? SourceDeviceId { get; set; }
         public Device? SourceDevice { get; set; }
-        // Field published by the source sensor ("temperature")
-        public string? SensorFieldName { get; set; }
-        public RuleOperation Operation { get; set; }
+        public string? SensorFieldName { get; set; } // Field published by the source sensor ("temperature" etc.)
+        public RuleOperation Operation { get; set; } // GreaterThan, GreaterThanOrEqual, etc.
         public float SensorRuleValue { get; set; }
 
         // Time trigger (RuleType == Time)
@@ -33,6 +31,6 @@ namespace IoTmate.Model.Entities
         public int? TimeMinute { get; set; }
 
         // For timed rules
-        // public int? DaysOfWeekMask { get; set; }
+        public bool[] DaysOfWeek { get; set; } = [];
     }
 }

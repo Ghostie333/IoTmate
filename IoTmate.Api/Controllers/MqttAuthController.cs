@@ -26,7 +26,7 @@ namespace IoTmate.Api.Controllers
             }
 
             // Check for not-backend devices
-            bool isValid = await _deviceService.ValidateCredentialsAsync(request.Username, request.Password);
+            bool isValid = await _deviceService.ValidateCredentialsAsync(request.Username, request.Password, HttpContext.RequestAborted);
             return isValid ? Ok() : Unauthorized();
         }
 

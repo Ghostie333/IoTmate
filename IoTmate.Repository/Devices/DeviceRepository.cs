@@ -7,18 +7,18 @@ namespace IoTmate.Repository.Devices;
 
 public class DeviceRepository(ApplicationDbContext dbContext) : BaseRepository(dbContext), IDeviceRepository
 {
-    public async Task<bool> SaveDeviceAsync(Device device)
+    public async Task<bool> SaveDeviceAsync(Device device, CancellationToken ct)
     {
         if (DbContext.Entry(device).State == EntityState.Detached)
         {
             DbContext.Devices.Update(device);
         }
 
-        await DbContext.SaveChangesAsync();
+        await DbContext.SaveChangesAsync(ct);
         return true;
     }
 
-    public async Task<Device?> GetByDeviceIdAsync(string deviceId)
+    public async Task<Device?> GetByDeviceIdAsync(string deviceId, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(deviceId))
             return null;
@@ -26,10 +26,10 @@ public class DeviceRepository(ApplicationDbContext dbContext) : BaseRepository(d
         var normalizedDeviceId = deviceId.Trim().ToUpperInvariant();
         return await DbContext.Devices
             .Include(d => d.RelayState)
-            .FirstOrDefaultAsync(d => d.DeviceId == normalizedDeviceId);
+            .FirstOrDefaultAsync(d => d.DeviceId == normalizedDeviceId, ct);
     }
 
-    public async Task<bool> ValidateCredentialsAsync(string deviceId, string secretToken)
+    public async Task<bool> ValidateCredentialsAsync(string deviceId, string secretToken, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(deviceId) || string.IsNullOrWhiteSpace(secretToken))
             return false;
@@ -38,7 +38,7 @@ public class DeviceRepository(ApplicationDbContext dbContext) : BaseRepository(d
 
         var device = await DbContext.Devices
             .AsNoTracking()
-            .FirstOrDefaultAsync(d => d.DeviceId == normalizedDeviceId);
+            .FirstOrDefaultAsync(d => d.DeviceId == normalizedDeviceId, ct);
 
         if (device == null || string.IsNullOrEmpty(device.SecretToken))
             return false;
