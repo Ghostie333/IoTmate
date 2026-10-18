@@ -7,18 +7,26 @@ namespace IoTmate.Repository.Rules
 {
     public class RuleRepository(ApplicationDbContext dbContext) : BaseRepository(dbContext), IRuleRepository
     {
-        // GET
         public async Task<Rule?> GetRuleByIdAsync(Guid id, CancellationToken ct)
         {
-            if(id == Guid.Empty) return null;
-            return await DbContext.Rules.FirstOrDefaultAsync(r => r.Id == id, ct);
+            if (id == Guid.Empty) return null;
+            return await DbContext.Rules
+                .Include(r => r.TargetDevice)
+                .Include(r => r.SourceDevice)
+                .FirstOrDefaultAsync(r => r.Id == id, ct);
         }
+
         public async Task<List<Rule>> GetRulesByRoomIdAsync(Guid roomId, CancellationToken ct)
         {
             if (roomId == Guid.Empty) return [];
-            return await DbContext.Rules.Where(r => r.RoomId == roomId).ToListAsync(ct);
+            return await DbContext.Rules
+                .Where(r => r.RoomId == roomId)
+                .Include(r => r.TargetDevice)
+                .Include(r => r.SourceDevice)
+                .ToListAsync(ct);
         }
-        public async Task<List<Rule>> GetEnabledReadingRulesAsync(Guid sourceDeviceId, CancellationToken ct) // For checking if sensor based rule is true
+
+        public async Task<List<Rule>> GetEnabledReadingRulesAsync(Guid sourceDeviceId, CancellationToken ct)
         {
             if (sourceDeviceId == Guid.Empty) return [];
             return await DbContext.Rules
@@ -27,7 +35,8 @@ namespace IoTmate.Repository.Rules
                 .ThenInclude(d => d!.RelayState)
                 .ToListAsync(ct);
         }
-        public async Task<List<Rule>> GetEnabledTimeRulesAsync(CancellationToken ct) // Timed rules
+
+        public async Task<List<Rule>> GetEnabledTimeRulesAsync(CancellationToken ct)
         {
             return await DbContext.Rules
                 .Where(r => r.RuleType == RuleType.Time && r.IsEnabled)
@@ -36,13 +45,14 @@ namespace IoTmate.Repository.Rules
                 .ThenInclude(d => d!.RelayState)
                 .ToListAsync(ct);
         }
-        // CREATE / UPDATE
+
         public async Task<Rule?> CreateRuleAsync(Rule newRule, CancellationToken ct)
         {
             DbContext.Rules.Add(newRule);
             await DbContext.SaveChangesAsync(ct);
             return newRule;
         }
+
         public async Task UpdateRuleAsync(Rule updatedRule, CancellationToken ct)
         {
             if (DbContext.Entry(updatedRule).State == EntityState.Detached)
@@ -50,7 +60,6 @@ namespace IoTmate.Repository.Rules
             await DbContext.SaveChangesAsync(ct);
         }
 
-        // DELETE
         public async Task<bool> DeleteRuleAsync(Guid id, CancellationToken ct)
         {
             var rule = await DbContext.Rules.FirstOrDefaultAsync(r => r.Id == id, ct);

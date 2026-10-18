@@ -2,6 +2,7 @@
 using IoTmate.Services.Devices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace IoTmate.Api.Controllers;
 
@@ -10,6 +11,7 @@ namespace IoTmate.Api.Controllers;
 public class DeviceRegistrationController(IDeviceService deviceService) : ControllerBase
 {
     private readonly IDeviceService _deviceService = deviceService;
+    private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
     [HttpPost("register")]
     public async Task<IActionResult> RegisterDevice([FromBody] RegisterDeviceRequestDto request)
@@ -32,7 +34,7 @@ public class DeviceRegistrationController(IDeviceService deviceService) : Contro
     [HttpPatch("{deviceId}")]
     public async Task<IActionResult> UpdateDevice([FromRoute] string deviceId, [FromBody] UpdateDeviceRequestDto request)
     {
-        await _deviceService.UpdateDeviceAsync(deviceId, request.NewName, HttpContext.RequestAborted);
+        await _deviceService.UpdateDeviceAsync(deviceId, request.NewName, CurrentUserId, HttpContext.RequestAborted);
         return Ok();
     }
 }

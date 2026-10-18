@@ -4,11 +4,12 @@ using IoTmate.Dto.Device;
 using IoTmate.Model.Entities;
 using IoTmate.Model.Enums;
 using IoTmate.Repository.Devices;
+using IoTmate.Services.Rooms;
 using Microsoft.AspNetCore.Identity;
 
 namespace IoTmate.Services.Devices;
 
-public class DeviceService(IDeviceRepository deviceRepository) : IDeviceService
+public class DeviceService(IDeviceRepository deviceRepository, IRoomService roomService) : IDeviceService
 {
     private readonly PasswordHasher<Device> _passwordHasher = new();
 
@@ -96,11 +97,16 @@ public class DeviceService(IDeviceRepository deviceRepository) : IDeviceService
         return new DeviceRegistrationResult { Device = newDevice, RawSecretToken = rawSecretToken };
     }
 
-    public async Task UpdateDeviceAsync(string deviceId, string newName, CancellationToken ct)
+    public async Task UpdateDeviceAsync(string deviceId, string newName, string currentUserId, CancellationToken ct)
     {
         var normalizedMac = deviceId.Trim().ToUpperInvariant();
         var device = await deviceRepository.GetByDeviceIdAsync(normalizedMac, ct)
             ?? throw new NotFoundException("device.notFound");
+
+        if (device.RoomId is null)
+            throw new NotFoundException("device.notFound");
+
+        await roomService.GetUserRole(device.RoomId.Value, currentUserId, ct);
 
         device.Name = newName;
         await deviceRepository.SaveDeviceAsync(device, ct);

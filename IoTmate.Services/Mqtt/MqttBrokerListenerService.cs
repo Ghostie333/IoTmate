@@ -12,6 +12,7 @@ namespace IoTmate.Services.Mqtt
         private readonly MqttClientOptions _mqttOptions;
         private readonly ILogger<MqttBrokerListenerService> _logger;
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly SemaphoreSlim _reconnectSignal = new(0, 1);
 
         public MqttBrokerListenerService(
             IConfiguration configuration,
@@ -60,6 +61,8 @@ namespace IoTmate.Services.Mqtt
             // Re-create subscriptions after every connect/reconnect
             _mqttClient.ConnectedAsync += OnConnectedAsync;
 
+            _mqttClient.DisconnectedAsync += OnDisconnectedAsync;
+
             // All messages from all subscribed topics land here
             _mqttClient.ApplicationMessageReceivedAsync += OnMessageReceivedAsync;
         }
@@ -73,6 +76,18 @@ namespace IoTmate.Services.Mqtt
                 new MqttClientSubscribeOptionsBuilder()
                     .WithTopicFilter(f => f.WithTopic("#"))
                     .Build());
+        }
+
+        private Task OnDisconnectedAsync(MqttClientDisconnectedEventArgs args)
+        {
+            _logger.LogWarning("Disconnected from MQTT Broker. Reconnecting...");
+
+            if (_reconnectSignal.CurrentCount == 0)
+            {
+                _reconnectSignal.Release();
+            }
+
+            return Task.CompletedTask;
         }
 
         private async Task OnMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs args)
@@ -117,17 +132,31 @@ namespace IoTmate.Services.Mqtt
                 {
                     _logger.LogInformation("Connecting to MQTT Broker...");
                     await _mqttClient.ConnectAsync(_mqttOptions, stoppingToken);
+
+                    while (_reconnectSignal.Wait(0))
+                    {
+                    }
+
+                    await _reconnectSignal.WaitAsync(stoppingToken);
+                }
+                catch (OperationCanceledException)
+                {
                     break;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    _logger.LogWarning("Could not connect to MQTT Broker. Retrying in 5 seconds...");
-                    await Task.Delay(5000, stoppingToken);
+                    _logger.LogWarning(ex, "Could not connect to MQTT Broker. Retrying in 5 seconds...");
+
+                    try
+                    {
+                        await Task.Delay(5000, stoppingToken);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        break;
+                    }
                 }
             }
-
-            // Keep the service alive until cancellation is requested
-            await Task.Delay(Timeout.Infinite, stoppingToken).ContinueWith(_ => { }, stoppingToken);
         }
 
         public override async Task StopAsync(CancellationToken cancellationToken)
