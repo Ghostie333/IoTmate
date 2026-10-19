@@ -7,6 +7,6 @@ namespace IoTmate.Services.Devices.StateHandlers
     public interface IDeviceStateHandler
     {
         DeviceType DeviceType { get; }
-        Task HandleStatePayloadAsync(Device device, string payload, IServiceScope scope, CancellationToken ct);
+        Task HandleStatePayloadAsync(Device device, string payload, bool retained, IServiceScope scope, CancellationToken ct);
     }
 }

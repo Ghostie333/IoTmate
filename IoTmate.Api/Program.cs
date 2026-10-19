@@ -71,6 +71,7 @@ builder.Services.AddScoped<IMqttMessageRouterService, MqttMessageRouterService>(
 
 // Device services
 builder.Services.AddSingleton<IDeviceStateService, DeviceStateService>();
+builder.Services.AddHostedService<DevicePresenceSweepService>();
 builder.Services.AddScoped<IRoomRepository, RoomRepository>();
 
 // Device state handlers
@@ -81,7 +82,10 @@ builder.Services.AddKeyedScoped<IDeviceStateHandler, SensorStateHandler>(DeviceT
 builder.Services.AddScoped<IRoomService, RoomService>();
 
 // SignalR hubs
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+});
 
 // Rules
 builder.Services.AddScoped<IRuleRepository, RuleRepository>();

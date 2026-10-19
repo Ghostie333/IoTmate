@@ -20,7 +20,7 @@ namespace IoTmate.Services.Devices.StateHandlers
         private readonly ILogger<PowerStripStateHandler> _logger = logger;
         private readonly IHubContext<DeviceHub, IDeviceHubClient> _deviceHub = deviceHub;
 
-        public async Task HandleStatePayloadAsync(Device device, string payload, IServiceScope scope, CancellationToken ct)
+        public async Task HandleStatePayloadAsync(Device device, string payload, bool retained, IServiceScope scope, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(payload))
                 return;
@@ -33,7 +33,9 @@ namespace IoTmate.Services.Devices.StateHandlers
 
                 device.RelayState ??= new DeviceRelayState { DeviceId = device.Id };
                 device.RelayState.OutletsState = outletsState;
-                device.LastSeenAt = DateTime.UtcNow;
+
+                if (!retained)
+                    device.LastSeenAt = DateTime.UtcNow;
 
                 var deviceRepository = scope.ServiceProvider.GetRequiredService<IDeviceRepository>();
                 bool success = await deviceRepository.SaveDeviceAsync(device, ct);

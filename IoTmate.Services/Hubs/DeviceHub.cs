@@ -9,11 +9,11 @@ namespace IoTmate.Services.Hubs
     public class DeviceHub(IRoomService roomService) : Hub<IDeviceHubClient>
     {
         private readonly IRoomService _roomService = roomService;
-        public async Task JoinRoom(Guid roomId, CancellationToken ct)
+        public async Task JoinRoom(Guid roomId)
         {
             try
             {
-                await _roomService.GetUserRole(roomId, Context.UserIdentifier!, ct);
+                await _roomService.GetUserRole(roomId, Context.UserIdentifier!, Context.ConnectionAborted);
             }
             catch (ForbiddenException)
             {

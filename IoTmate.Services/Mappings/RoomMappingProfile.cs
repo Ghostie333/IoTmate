@@ -11,7 +11,9 @@ namespace IoTmate.Services.Mappings
         {
             CreateMap<CreateRoomInputDto, Room>();
             CreateMap<Room, RoomDto>();
-            CreateMap<Device, DeviceDto>();
+            CreateMap<Device, DeviceDto>()
+                .ForMember(dest => dest.OutletsState, opt => opt.MapFrom(src =>
+                    src.RelayState != null ? src.RelayState.OutletsState : null));
         }
     }
 }

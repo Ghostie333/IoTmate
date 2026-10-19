@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MQTTnet;
+using MQTTnet.Protocol;
 
 namespace IoTmate.Services.Mqtt
 {
@@ -74,7 +75,9 @@ namespace IoTmate.Services.Mqtt
             // Wildcard "#" captures ALL topics on the broker
             await _mqttClient.SubscribeAsync(
                 new MqttClientSubscribeOptionsBuilder()
-                    .WithTopicFilter(f => f.WithTopic("#"))
+                    .WithTopicFilter(f => f
+                        .WithTopic("#")
+                        .WithQualityOfServiceLevel(MqttQualityOfServiceLevel.AtLeastOnce))
                     .Build());
         }
 
@@ -94,8 +97,9 @@ namespace IoTmate.Services.Mqtt
         {
             var topic = args.ApplicationMessage.Topic;
             var payload = args.ApplicationMessage.ConvertPayloadToString();
+            var retained = args.ApplicationMessage.Retain;
 
-            _logger.LogInformation("Received message on {Topic}: {Payload}", topic, payload);
+            _logger.LogInformation("Received message on {Topic} (retained: {Retained}): {Payload}", topic, retained, payload);
 
             try
             {
@@ -103,7 +107,7 @@ namespace IoTmate.Services.Mqtt
                 using var scope = _scopeFactory.CreateScope();
                 var router = scope.ServiceProvider.GetRequiredService<IMqttMessageRouterService>();
 
-                await router.HandleAsync(topic, payload, CancellationToken.None);
+                await router.HandleAsync(topic, payload, retained, CancellationToken.None);
             }
             catch (Exception ex)
             {
@@ -116,6 +120,7 @@ namespace IoTmate.Services.Mqtt
             var message = new MqttApplicationMessageBuilder()
                 .WithTopic(topic)
                 .WithPayload(payload)
+                .WithQualityOfServiceLevel(MqttQualityOfServiceLevel.AtLeastOnce)
                 .WithRetainFlag(false)
                 .Build();
 

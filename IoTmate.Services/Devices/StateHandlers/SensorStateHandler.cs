@@ -22,8 +22,11 @@ namespace IoTmate.Services.Devices.StateHandlers
     {
         public DeviceType DeviceType => DeviceType.Sensor;
 
-        public async Task HandleStatePayloadAsync(Device device, string payload, IServiceScope scope, CancellationToken ct)
+        public async Task HandleStatePayloadAsync(Device device, string payload, bool retained, IServiceScope scope, CancellationToken ct)
         {
+            if (retained)
+                return;
+
             var readings = JsonSerializer.Deserialize<Dictionary<string, float>>(payload);
             if (readings == null || readings.Count == 0)
                 return;

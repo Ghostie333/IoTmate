@@ -139,7 +139,10 @@ namespace IoTmate.Repository.Rooms
             if (roomId == Guid.Empty)
                 return [];
 
-            var room = await DbContext.Rooms.Include(r => r.Devices).FirstOrDefaultAsync(r => r.Id == roomId, ct);
+            var room = await DbContext.Rooms
+                .Include(r => r.Devices)
+                .ThenInclude(d => d.RelayState)
+                .FirstOrDefaultAsync(r => r.Id == roomId, ct);
             if (room == null)
                 return [];
 

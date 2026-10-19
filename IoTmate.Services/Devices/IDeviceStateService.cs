@@ -7,7 +7,7 @@ namespace IoTmate.Services.Devices
     public interface IDeviceStateService
     {
         Task SendRelayCommandAsync(string deviceId, int relayNum, bool turnOn, CancellationToken ct);
-        Task HandleStateAsync(string deviceId, string payload, CancellationToken ct);
-        Task HandleStatusAsync(string deviceId, string payload, CancellationToken ct);
+        Task HandleStateAsync(string deviceId, string payload, bool retained, CancellationToken ct);
+        Task HandleStatusAsync(string deviceId, string payload, bool retained, CancellationToken ct);
     }
 }

@@ -8,7 +8,7 @@ namespace IoTmate.Services.Mqtt
         private readonly ILogger<MqttMessageRouterService> _logger = logger;
         private readonly IDeviceStateService _deviceStateService = deviceStateService;
 
-        public async Task HandleAsync(string topic, string payload, CancellationToken ct)
+        public async Task HandleAsync(string topic, string payload, bool retained, CancellationToken ct)
         {
             // devices/{deviceId}/status | state | command
             var segments = topic.Split('/');
@@ -24,11 +24,11 @@ namespace IoTmate.Services.Mqtt
             switch (messageType)
             {
                 case "status":
-                    await _deviceStateService.HandleStatusAsync(deviceId, payload, ct);
+                    await _deviceStateService.HandleStatusAsync(deviceId, payload, retained, ct);
                     break;
 
                 case "state":
-                    await _deviceStateService.HandleStateAsync(deviceId, payload, ct);
+                    await _deviceStateService.HandleStateAsync(deviceId, payload, retained, ct);
                     break;
 
                 default:

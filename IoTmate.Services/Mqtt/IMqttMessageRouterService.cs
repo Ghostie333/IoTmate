@@ -6,6 +6,6 @@ namespace IoTmate.Services.Mqtt
 {
     public interface IMqttMessageRouterService
     {
-        Task HandleAsync(string topic, string payload, CancellationToken ct);
+        Task HandleAsync(string topic, string payload, bool retained, CancellationToken ct);
     }
 }

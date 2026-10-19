@@ -30,7 +30,7 @@ namespace IoTmate.Services.Devices
             PropertyNameCaseInsensitive = true
         };
 
-        public async Task HandleStateAsync(string deviceId, string payload, CancellationToken ct)
+        public async Task HandleStateAsync(string deviceId, string payload, bool retained, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(deviceId) || string.IsNullOrEmpty(payload))
                 return;
@@ -46,7 +46,7 @@ namespace IoTmate.Services.Devices
 
                 // Get handler for correct device type
                 var handler = scope.ServiceProvider.GetRequiredKeyedService<IDeviceStateHandler>(device.DeviceType);
-                await handler.HandleStatePayloadAsync(device, payload, scope, ct);
+                await handler.HandleStatePayloadAsync(device, payload, retained, scope, ct);
             }
             catch (Exception ex)
             {
@@ -54,10 +54,16 @@ namespace IoTmate.Services.Devices
             }
         }
 
-        public async Task HandleStatusAsync(string deviceId, string payload, CancellationToken ct)
+        public async Task HandleStatusAsync(string deviceId, string payload, bool retained, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(deviceId) || string.IsNullOrEmpty(payload))
                 return;
+
+            if (retained)
+            {
+                _logger.LogDebug("[DeviceStateService] Ignoring retained status for device {DeviceId}", deviceId);
+                return;
+            }
 
             try
             {
